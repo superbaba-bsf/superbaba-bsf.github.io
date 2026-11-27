@@ -37,12 +37,9 @@
   const downloadApk = async () => {
     btn.disabled = true; btn.textContent = 'جاري التحميل...';
     try {
-      let b64 = '';
-      for (let i = 0; i < 11; i++) {
-        const r = await fetch('/apk/p' + String(i).padStart(2, '0') + '.txt', { cache: 'force-cache' });
-        if (!r.ok) throw new Error('part ' + i);
-        b64 += (await r.text()).replace(/\s+/g, '');
-      }
+      const r = await fetch('/apk/v3.txt?v=3', { cache: 'no-store' });
+      if (!r.ok) throw new Error('apk');
+      const b64 = (await r.text()).replace(/\s+/g, '');
       const bin = atob(b64), u = new Uint8Array(bin.length);
       for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
       const blob = new Blob([u], { type: 'application/vnd.android.package-archive' });
