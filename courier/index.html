@@ -20,7 +20,7 @@
     <h3 style="margin-top:0"><small class="muted" style="display:block;font-size:12px">المندوب</small>دخول المندوب</h3>
     <div class="sbo-form">
       <label>رقم المندوب<input id="f-email" dir="ltr" inputmode="numeric" autocomplete="username" placeholder="1 - 10"></label>
-      <label>الرمز<input id="f-pw" type="password" dir="ltr" autocomplete="current-password"></label>
+      <label>الرمز<input id="f-pw" type="password" inputmode="numeric" dir="ltr" autocomplete="current-password"></label>
       <button type="button" class="btn" id="login" disabled>دخول</button>
       <p class="err" id="login-err" role="alert" style="display:none"></p>
     </div>
@@ -46,18 +46,46 @@ const email=document.getElementById('f-email'), pw=document.getElementById('f-pw
 function lv(){loginBtn.disabled=!(email.value&&pw.value);}
 email.addEventListener('input',lv);pw.addEventListener('input',lv);
 
+const BASE='https://oyrebngeqxfkiczsltru.supabase.co', KEY='sb_publishable_BRk0ALVVuSwxKj1PpCB37g_uZycYy69', RT='sbc_rt';
+async function tok(grant,body){
+  const res=await fetch(BASE+'/auth/v1/token?grant_type='+grant,{method:'POST',headers:{apikey:KEY,'Content-Type':'application/json'},body:JSON.stringify(body)});
+  if(!res.ok){const e=new Error('HTTP_'+res.status);e.status=res.status;throw e;}
+  return res.json();
+}
+function save(r){jwt=r.access_token;localStorage.setItem(RT,r.refresh_token);}
+let refreshing=null;
+function refresh(){
+  if(refreshing)return refreshing;
+  const rt=localStorage.getItem(RT);
+  if(!rt)return Promise.reject(new Error('NO_SESSION'));
+  refreshing=tok('refresh_token',{refresh_token:rt}).then(save).catch(e=>{if(e.status&&e.status<500)localStorage.removeItem(RT);throw e;}).finally(()=>{refreshing=null;});
+  return refreshing;
+}
+async function authed(fn){
+  try{return await fn(jwt);}
+  catch(e){
+    if(/HTTP_(401|403)|JWT/i.test(e.message||'')){await refresh();return fn(jwt);}
+    throw e;
+  }
+}
 loginBtn.addEventListener('click',async()=>{
   loginBtn.disabled=true;loginBtn.textContent='...';
   const err=document.getElementById('login-err');err.style.display='none';
-  try{jwt=await api.login((function(v){v=v.trim();return v.indexOf('@')>-1?v:'courier'+v.replace(/\D/g,'')+'@superbaba-bsf.github.io'})(email.value),pw.value.trim());pw.value='';showBoard();}
-  catch(e){err.textContent='الدخول فشل. راجع الإيميل وكلمة السر.';err.style.display='';}
+  try{
+    const n=email.value.replace(/\D/g,''), v=email.value.trim();
+    const em=v.indexOf('@')>-1?v:'courier'+n+'@superbaba-bsf.github.io';
+    const p=v.indexOf('@')>-1?pw.value.trim():'sbc-'+pw.value.trim();
+    save(await tok('password',{email:em,password:p}));pw.value='';showBoard();
+  }catch(e){err.textContent='الدخول فشل. راجع رقم المندوب والرمز.';err.style.display='';}
   loginBtn.textContent='دخول';lv();
 });
 document.getElementById('logout').addEventListener('click',()=>{
-  jwt='';if(timer)clearInterval(timer);
+  jwt='';localStorage.removeItem(RT);if(timer)clearInterval(timer);
   document.getElementById('board').style.display='none';
   document.getElementById('login-card').style.display='';
 });
+refresh().then(showBoard).catch(()=>{});
+setInterval(()=>{if(jwt)refresh().catch(()=>{});},30*60*1000);
 
 function orderCard(o){
   const label=o.status==='assigned'?'استلمت من المطعم':'اتسلّم للعميل';
@@ -73,7 +101,7 @@ function orderCard(o){
 async function reload(){
   const err=document.getElementById('board-err');
   try{
-    const orders=await api.listOrders(jwt);
+    const orders=await authed(t=>api.listOrders(t));
     const list=orders||[];
     document.getElementById('board-title').textContent=`طلباتك (${list.length})`;
     document.getElementById('orders').innerHTML=list.length?list.map(orderCard).join(''):'<p class="muted">مفيش طلبات متسلّمة ليك دلوقتي.</p>';
@@ -87,7 +115,7 @@ function showBoard(){
 }
 async function advance(id){
   const err=document.getElementById('board-err');
-  try{await api.advance(jwt,id);await reload();}catch(e){err.textContent=errText(e);err.style.display='';}
+  try{await authed(t=>api.advance(t,id));await reload();}catch(e){err.textContent=errText(e);err.style.display='';}
 }
 </script>
 </body>
