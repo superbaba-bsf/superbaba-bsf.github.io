@@ -19,8 +19,8 @@
   <section class="card" id="login-card">
     <h3 style="margin-top:0"><small class="muted" style="display:block;font-size:12px">المندوب</small>دخول المندوب</h3>
     <div class="sbo-form">
-      <label>الإيميل<input id="f-email" dir="ltr" autocomplete="username"></label>
-      <label>كلمة السر<input id="f-pw" type="password" dir="ltr" autocomplete="current-password"></label>
+      <label>رقم المندوب<input id="f-email" dir="ltr" inputmode="numeric" autocomplete="username" placeholder="1 - 10"></label>
+      <label>الرمز<input id="f-pw" type="password" dir="ltr" autocomplete="current-password"></label>
       <button type="button" class="btn" id="login" disabled>دخول</button>
       <p class="err" id="login-err" role="alert" style="display:none"></p>
     </div>
@@ -49,7 +49,7 @@ email.addEventListener('input',lv);pw.addEventListener('input',lv);
 loginBtn.addEventListener('click',async()=>{
   loginBtn.disabled=true;loginBtn.textContent='...';
   const err=document.getElementById('login-err');err.style.display='none';
-  try{jwt=await api.login(email.value.trim(),pw.value);pw.value='';showBoard();}
+  try{jwt=await api.login((function(v){v=v.trim();return v.indexOf('@')>-1?v:'courier'+v.replace(/\D/g,'')+'@superbaba-bsf.github.io'})(email.value),pw.value.trim());pw.value='';showBoard();}
   catch(e){err.textContent='الدخول فشل. راجع الإيميل وكلمة السر.';err.style.display='';}
   loginBtn.textContent='دخول';lv();
 });
