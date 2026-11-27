@@ -1,0 +1,17 @@
+{
+  "name": "سوبر بابا",
+  "short_name": "Super Baba",
+  "description": "اطلب بيتزا وسندوتشات من سوبر بابا في بني سويف وتابع طلبك.",
+  "lang": "ar",
+  "dir": "rtl",
+  "start_url": "/?source=app",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#fff4dc",
+  "theme_color": "#103d3b",
+  "icons": [
+    { "src": "/assets/hero.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/assets/hero.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}
