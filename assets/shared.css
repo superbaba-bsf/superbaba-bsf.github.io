@@ -175,3 +175,5 @@ footer.closing{text-align:center;color:var(--muted);font-size:13px;margin:24px 0
 .rv-c textarea{display:block;width:100%;margin-top:6px;font:inherit;padding:10px;border:1px solid var(--hair);border-radius:10px;box-sizing:border-box}
 .rv-sum{font-size:18px}.rv-sum b{font-size:32px;color:var(--green)}
 .rv-item{border-top:1px solid var(--hair);padding:10px 0}.rv-item p{margin:4px 0 0}
+.rv-pop{animation:rvpop .9s ease 2;box-shadow:0 0 0 3px #f7931e}
+@keyframes rvpop{50%{transform:scale(1.03)}}
