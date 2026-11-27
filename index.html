@@ -84,6 +84,8 @@
     <p class="muted">الزر بيفتح واتساب برسالة جاهزة بتفاصيل طلبك، وإنت اللي بتبعتها. مفيش دفع أونلاين.</p>
   </section>
 
+  <section class="card" id="reviews" style="display:none"></section>
+
   <section class="card sbm-mapbox">
     <h3 style="margin-top:0">مناطق التوصيل</h3>
     <img src="assets/map_center.jpg" alt="صورة جوية بالقمر الصناعي لوسط بني سويف مع الشوارع الرئيسية">
@@ -164,6 +166,7 @@ function updateSend(sum,sandChosen){
 ['cname','caddr','cnote'].forEach(id=>document.getElementById(id).addEventListener('input',renderOrder));
 renderMenu();renderOrder();
 </script>
+<script src="assets/reviews.js" defer></script>
 <script src="assets/pwa.js?v=4"></script>
 <script src="assets/assets/fig.js?v=2" defer></script>
 </body>
