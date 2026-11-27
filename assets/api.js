@@ -56,6 +56,7 @@ window.SB_API = (() => {
     reviewSubmit(token, restaurant, courier, comment) {
       return call('/rest/v1/rpc/review_submit', 'POST', { p_token: token, p_restaurant: restaurant, p_courier: courier, p_comment: comment || null });
     },
+    pushSubscribe(token, endpoint, p256dh, auth) { return call('/rest/v1/rpc/push_subscribe', 'POST', { p_token: token, p_endpoint: endpoint, p_p256dh: p256dh, p_auth: auth }); },
     reviewsPublic() { return call('/rest/v1/rpc/reviews_public', 'POST', {}); },
     reviewsStaff(token) { return call('/rest/v1/rpc/reviews_staff', 'POST', {}, token); },
     reviewHide(token, id, hidden) { return call('/rest/v1/rpc/review_hide', 'POST', { p_id: id, p_hidden: hidden }, token); },
