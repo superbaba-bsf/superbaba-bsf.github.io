@@ -11,6 +11,7 @@
   <div class="sbo-hero"><img src="../assets/hero.png" alt=""><div><h1>سوبر بابا</h1><p>بيتزا وسندوتشات، بني سويف</p></div></div>
   <nav class="nav" aria-label="الصفحات">
     <a href="../order/">العميل</a>
+    <a href="../track/">تتبّع الطلب</a>
     <a href="../kitchen/" class="on" aria-current="page">المطبخ</a>
     <a href="../courier/">المندوب</a>
   </nav>
@@ -58,6 +59,20 @@ document.getElementById('logout').addEventListener('click',()=>{
   document.getElementById('login-card').style.display='';
 });
 
+const TRACK_BASE=location.origin+'/track/#';
+const trackCode=o=>'SB-'+String(o.public_token||'').slice(0,6).toUpperCase();
+function trackLink(o){return TRACK_BASE+o.public_token;}
+function waTrack(o){
+  const p=String(o.phone||'').replace(/\D/g,'').replace(/^0/,'');
+  const msg='أهلاً '+o.customer_name+'، طلبك من سوبر بابا '+trackCode(o)+' اتسجل عندنا. تابع حالته من اللينك ده: '+trackLink(o);
+  return 'https://wa.me/20'+p+'?text='+encodeURIComponent(msg);
+}
+function copyTrack(btn){
+  const link=btn.dataset.link;
+  const done=()=>{btn.textContent='اتنسخ ✓';};
+  if(navigator.clipboard){navigator.clipboard.writeText(link).then(done,done);}else{prompt('لينك التتبع:',link);}
+}
+
 function orderCard(o,couriers){
   const actions=[];
   if(o.status==='new')actions.push(`<button type="button" class="btn sm" onclick="act('${o.id}','preparing')">ابدأ التجهيز</button>`);
@@ -67,6 +82,7 @@ function orderCard(o,couriers){
   return `<div class="sbo-line"><div class="sbo-line-h"><b>${o.customer_name}</b><span class="sbo-pill s-${o.status}">${STATUS_AR[o.status]||o.status}</span></div>
     <p>${o.address}</p>
     <p class="sbo-links"><a href="tel:${o.phone}" dir="ltr">${o.phone}</a><a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(o.address)}" target="_blank" rel="noreferrer">الخريطة</a></p>
+    <p class="sbo-links"><a href="${waTrack(o)}" target="_blank" rel="noreferrer">ابعت لينك التتبع واتساب</a><button type="button" class="btn ghost sm" onclick="copyTrack(this)" data-link="${trackLink(o)}">انسخ لينك التتبع</button></p>
     ${o.note?`<p class="muted">ملاحظات: ${o.note}</p>`:''}
     <ul>${o.items.map(i=>`<li>${i.qty} × ${i.name}${i.extras.length?' + '+i.extras.join(' + '):''}</li>`).join('')}</ul>
     <p><b>${money(o.total_egp)}</b> بدون التوصيل</p>
