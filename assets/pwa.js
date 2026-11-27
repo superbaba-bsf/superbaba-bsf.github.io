@@ -35,7 +35,7 @@
     else help.style.display = 'flex';
   };
   const downloadApk = async () => {
-    btn.disabled = true; btn.textContent = 'جاري التحميل...';
+    const lk = document.getElementById('sb-apk-link'); if (lk) lk.textContent = 'جاري التحميل...';
     try {
       const r = await fetch('/apk/v3.txt?v=3', { cache: 'no-store' });
       if (!r.ok) throw new Error('apk');
@@ -46,18 +46,22 @@
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob); a.download = 'super-baba.apk';
       document.body.appendChild(a); a.click(); a.remove();
-      btn.textContent = 'تم التحميل';
       note.style.display = 'block';
     } catch (e) {
-      btn.textContent = 'تحميل التطبيق';
       await pwaInstall();
-    } finally { btn.disabled = false; }
+    } finally { const lk2 = document.getElementById('sb-apk-link'); if (lk2) lk2.textContent = 'تحميل APK'; }
   };
   const note = document.createElement('div');
   note.style.cssText = 'display:none;position:sticky;top:60px;z-index:9998;background:#fff4dc;color:#222;padding:10px 12px;font-size:14px;line-height:1.7;border-bottom:1px solid #e0c9a0';
-  note.innerHTML = 'افتح الملف <b>super-baba.apk</b> من التنزيلات واضغط <b>تثبيت</b>. لو ظهر تحذير، اسمح بالتثبيت من المتصفح ثم ارجع واضغط تثبيت. <a href="#" id="sb-pwa-link" style="color:#103d3b;font-weight:700">أو ثبّت من المتصفح</a>';
+  note.innerHTML = 'افتح الملف <b>super-baba.apk</b> من التنزيلات واضغط <b>تثبيت</b>. لو ظهر تحذير، اسمح بالتثبيت من المتصفح ثم ارجع واضغط تثبيت.';
   bar.after(note);
-  note.querySelector('#sb-pwa-link').addEventListener('click', e => { e.preventDefault(); pwaInstall(); });
-  btn.addEventListener('click', () => { android ? downloadApk() : pwaInstall(); });
+  btn.addEventListener('click', () => { pwaInstall(); });
+  if (android) {
+    const apk = document.createElement('a');
+    apk.href = '#'; apk.id = 'sb-apk-link'; apk.textContent = 'تحميل APK';
+    apk.style.cssText = 'color:#fff;font-size:12px;opacity:.85;text-decoration:underline;margin-inline-start:8px;white-space:nowrap';
+    apk.addEventListener('click', e => { e.preventDefault(); downloadApk(); });
+    bar.insertBefore(apk, btn);
+  }
   window.addEventListener('appinstalled', () => { bar.remove(); help.remove(); });
 })();
