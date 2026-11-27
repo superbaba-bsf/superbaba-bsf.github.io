@@ -136,20 +136,21 @@ window.SB_TRACK = (() => {
   }
 
   // Delivery alert: chime + vibrate + notification + open the review box.
-  let actx = null;
+  let actx = null, pendingChime = false;
   function unlockAudio() {
     try {
       const AC = window.AudioContext || window.webkitAudioContext;
       if (!AC) return;
       if (!actx) actx = new AC();
       if (actx.state === 'suspended') actx.resume();
+      if (pendingChime) { pendingChime = false; setTimeout(chime, 80); }
     } catch (e) {}
   }
   ['pointerdown', 'keydown', 'touchstart'].forEach(ev => document.addEventListener(ev, unlockAudio, { passive: true }));
   function chime() {
     try {
-      unlockAudio();
-      if (!actx || actx.state !== 'running') return;
+      if (!pendingChime) unlockAudio();
+      if (!actx || actx.state !== 'running') { pendingChime = true; return; }
       const t0 = actx.currentTime;
       [[784, 0], [988, 0.18], [1175, 0.36]].forEach(([f, d]) => {
         const o = actx.createOscillator(), g = actx.createGain();
