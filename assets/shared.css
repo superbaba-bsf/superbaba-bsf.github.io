@@ -138,4 +138,16 @@ footer.closing{text-align:center;color:var(--muted);font-size:13px;margin:24px 0
  100%{transform:perspective(800px) translateY(0) rotate(0) rotateY(360deg)}
 }
 .sbm-hero img,.sbo-hero img{transform-origin:50% 60%;animation:sb-pop .7s ease-out both,sb-act 3s ease-in-out .9s infinite;will-change:transform}
-@media(prefers-reduced-motion:reduce){.sbm-hero img,.sbo-hero img{animation:none}}
+
+
+/* Welcome bubble: pops in with each spin */
+.sbm-hero{position:relative}
+.sbm-hero::after{content:"أهلاً بيك في سوبر بابا!";position:absolute;top:12px;left:50%;z-index:2;background:var(--orange);color:#fff;font-weight:700;font-size:15px;line-height:1.4;padding:8px 14px;border-radius:16px;white-space:nowrap;box-shadow:0 3px 10px rgba(0,0,0,.18);pointer-events:none;opacity:0;animation:sb-say 3s ease-out .9s infinite both}
+@keyframes sb-say{
+ 0%,56%{opacity:0;transform:translateX(-50%) scale(.4)}
+ 66%{opacity:1;transform:translateX(-50%) scale(1.12)}
+ 72%,94%{opacity:1;transform:translateX(-50%) scale(1)}
+ 100%{opacity:0;transform:translateX(-50%) scale(.9)}
+}
+@media(max-width:700px){.sbm-hero::after{font-size:11px;padding:5px 9px;top:6px}}
+@media(prefers-reduced-motion:reduce){.sbm-hero img,.sbo-hero img{animation:none}.sbm-hero::after{animation:none;opacity:1;transform:translateX(-50%)}}
