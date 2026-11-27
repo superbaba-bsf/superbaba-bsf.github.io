@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>سوبر بابا · اطلب أونلاين</title>
+<link rel="stylesheet" href="../assets/shared.css">
+</head>
+<body>
+<div class="wrap">
+  <div class="sbo-hero"><img src="../assets/hero.png" alt=""><div><h1>سوبر بابا</h1><p>بيتزا وسندوتشات، بني سويف</p></div></div>
+  <nav class="nav" aria-label="الصفحات">
+    <a href="../order/" class="on" aria-current="page">العميل</a>
+    <a href="../kitchen/">المطبخ</a>
+    <a href="../courier/">المندوب</a>
+  </nav>
+
+  <p class="muted">الصور توضيحية بالذكاء الاصطناعي، مش تصوير للأكل الفعلي.</p>
+  <div id="track"></div>
+
+  <section class="card">
+    <h3 style="margin-top:0"><small class="muted" style="display:block;font-size:12px">اختار</small>بيتزا لارج</h3>
+    <div class="sbo-grid" id="grid-pizza"></div>
+  </section>
+  <section class="card">
+    <h3 style="margin-top:0"><small class="muted" style="display:block;font-size:12px">وكمان</small>سندوتشات</h3>
+    <div class="sbo-grid" id="grid-sand"></div>
+  </section>
+
+  <section class="card">
+    <h3 style="margin-top:0">طلبك</h3>
+    <div id="cart"></div>
+    <p id="cart-total" style="display:none"><b></b> (بدون التوصيل)</p>
+  </section>
+
+  <section class="card">
+    <h3 style="margin-top:0">بياناتك</h3>
+    <div class="sbo-form">
+      <label>الاسم<input id="f-name" autocomplete="name"></label>
+      <label>رقم التليفون<input id="f-phone" inputmode="tel" dir="ltr" autocomplete="tel"></label>
+      <label>العنوان بالتفصيل<textarea id="f-addr" rows="2"></textarea></label>
+      <label>ملاحظات<textarea id="f-note" rows="2"></textarea></label>
+    </div>
+    <button type="button" class="btn" id="send" disabled>إرسال الطلب</button>
+    <p class="err" id="err" role="alert" style="display:none"></p>
+    <p class="muted">مفيش دفع أونلاين من الصفحة. رسوم التوصيل والإجمالي النهائي بنأكدهم معاك قبل التنفيذ.</p>
+  </section>
+
+  <footer class="closing">متوصل بالتخزين.</footer>
+</div>
+
+<script src="../assets/menu.js"></script>
+<script src="../assets/api.js"></script>
+<script>
+const M=window.SB_MENU, money=window.SB_MONEY, api=window.SB_API, errText=window.SB_ERR, STATUS_AR=window.SB_STATUS_AR;
+const byId=Object.fromEntries(M.map(m=>[m.id,m])), extras=M.filter(m=>m.kind==='extra');
+const PHOTO=id=>'../assets/'+({p01:'n-margherita',p02:'n-cheese',p03:'n-ranch',p04:'n-bbq',p05:'n-shawarma',p06:'n-crispy',p07:'n-sogog',p08:'n-supreme',p09:'n-tuna',p10:'n-meat',s01:'n-sbeef',s02:'n-sdbeef',s03:'n-schick',s04:'n-sdchick'}[id])+'.jpg';
+let lines=[], keyN=0, busy=false;
+let token=localStorage.getItem('sb-order-token.v1')||'';
+
+const unit=l=>byId[l.id].price+(l.extras||[]).reduce((t,x)=>t+byId[x].price,0);
+const total=()=>lines.reduce((t,l)=>t+unit(l)*l.qty,0);
+
+function card(m){
+  const qty=lines.filter(l=>l.id===m.id).reduce((t,l)=>t+l.qty,0);
+  return `<div class="sbo-card"><img src="${PHOTO(m.id)}" alt="${m.name}" loading="lazy"><div class="sbo-card-b"><b>${m.name}</b><p class="sbo-detail">${m.detail}</p><div class="sbo-card-f"><span class="sbo-price">${money(m.price)}</span><button type="button" class="sbo-add" onclick="add('${m.id}')">${qty>0?`+ زود (${qty})`:'+ أضف'}</button></div></div></div>`;
+}
+function renderMenu(){
+  document.getElementById('grid-pizza').innerHTML=M.filter(m=>m.kind==='pizza').map(card).join('');
+  document.getElementById('grid-sand').innerHTML=M.filter(m=>m.kind==='sandwich').map(card).join('');
+}
+function add(id){lines.push({key:++keyN,id,qty:1,extras:[]});renderAll();}
+function patch(k,f){lines=lines.map(l=>l.key===k?f(l):l);renderAll();}
+function removeLine(k){lines=lines.filter(l=>l.key!==k);renderAll();}
+function toggleX(k,x){patch(k,l=>({...l,extras:(l.extras||[]).includes(x)?l.extras.filter(e=>e!==x):[...(l.extras||[]),x]}));}
+
+function renderCart(){
+  const el=document.getElementById('cart');
+  if(!lines.length){el.innerHTML='<p class="muted">لسه مفيش أصناف. اضغط على صنف فوق.</p>';}
+  else el.innerHTML=lines.map(l=>`<div class="sbo-line"><div class="sbo-line-h"><b>${byId[l.id].name}</b><span>${money(unit(l)*l.qty)}</span></div>
+    <div class="sbo-step"><button type="button" aria-label="قلل" onclick="${l.qty>1?`patch(${l.key},x=>({...x,qty:x.qty-1}))`:`removeLine(${l.key})`}">−</button><b>${l.qty}</b><button type="button" aria-label="زود" onclick="patch(${l.key},x=>({...x,qty:Math.min(20,x.qty+1)}))">+</button></div>
+    ${byId[l.id].kind==='pizza'?`<div class="sbo-chips">${extras.map(x=>`<label class="sbo-chip${(l.extras||[]).includes(x.id)?' on':''}"><input type="checkbox" ${(l.extras||[]).includes(x.id)?'checked':''} onchange="toggleX(${l.key},'${x.id}')">${x.name} +${x.price}</label>`).join('')}</div>`:''}</div>`).join('');
+  const tp=document.getElementById('cart-total');
+  tp.style.display=lines.length?'':'none';
+  tp.querySelector('b').textContent='إجمالي الأصناف: '+money(total());
+  validate();
+}
+function renderAll(){renderMenu();renderCart();}
+
+function validate(){
+  const name=document.getElementById('f-name').value, phone=document.getElementById('f-phone').value, addr=document.getElementById('f-addr').value;
+  const ready=lines.length>0&&name.trim().length>0&&/^[0-9+]{8,15}$/.test(phone.replace(/\s+/g,''))&&addr.trim().length>=5&&!busy;
+  const b=document.getElementById('send');b.disabled=!ready;b.textContent=busy?'بيتبعت...':'إرسال الطلب';
+}
+['f-name','f-phone','f-addr'].forEach(id=>document.getElementById(id).addEventListener('input',validate));
+
+document.getElementById('send').addEventListener('click',async()=>{
+  busy=true;validate();
+  const err=document.getElementById('err');err.style.display='none';
+  try{
+    const t=await api.placeOrder({
+      name:document.getElementById('f-name').value, phone:document.getElementById('f-phone').value,
+      address:document.getElementById('f-addr').value, note:document.getElementById('f-note').value,
+      items:lines.map(({id,qty,extras})=>({id,qty,extras}))});
+    token=t;localStorage.setItem('sb-order-token.v1',t);
+    lines=[];renderAll();startTrack();
+    window.scrollTo({top:0,behavior:'smooth'});
+  }catch(e){err.textContent=errText(e);err.style.display='';}
+  busy=false;validate();
+});
+
+/* ---- live tracking ---- */
+let trackTimer=null;
+async function tickTrack(){
+  if(!token)return;
+  try{
+    const r=await api.orderStatus(token);
+    const el=document.getElementById('track');
+    if(r)el.innerHTML=`<div class="callout"><b>${STATUS_AR[r.status]||r.status}</b>إجمالي الأصناف ${money(r.total_egp)} بدون التوصيل.${r.courier_name?` المندوب: ${r.courier_name}.`:''} الصفحة بتتحدّث لوحدها.</div>`;
+  }catch(e){}
+}
+function startTrack(){tickTrack();if(trackTimer)clearInterval(trackTimer);trackTimer=setInterval(tickTrack,20000);}
+if(token)startTrack();
+renderAll();
+</script>
+</body>
+</html>

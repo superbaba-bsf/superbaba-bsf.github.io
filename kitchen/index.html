@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>سوبر بابا · المطبخ</title>
+<link rel="stylesheet" href="../assets/shared.css">
+</head>
+<body>
+<div class="wrap">
+  <div class="sbo-hero"><img src="../assets/hero.png" alt=""><div><h1>سوبر بابا</h1><p>بيتزا وسندوتشات، بني سويف</p></div></div>
+  <nav class="nav" aria-label="الصفحات">
+    <a href="../order/">العميل</a>
+    <a href="../kitchen/" class="on" aria-current="page">المطبخ</a>
+    <a href="../courier/">المندوب</a>
+  </nav>
+
+  <section class="card" id="login-card">
+    <h3 style="margin-top:0"><small class="muted" style="display:block;font-size:12px">المطبخ</small>دخول سوبر بابا</h3>
+    <div class="sbo-form">
+      <label>الإيميل<input id="f-email" dir="ltr" autocomplete="username"></label>
+      <label>كلمة السر<input id="f-pw" type="password" dir="ltr" autocomplete="current-password"></label>
+      <button type="button" class="btn" id="login" disabled>دخول</button>
+      <p class="err" id="login-err" role="alert" style="display:none"></p>
+    </div>
+  </section>
+
+  <section class="card" id="board" style="display:none">
+    <h3 style="margin-top:0"><small class="muted" style="display:block;font-size:12px">المطبخ</small><span id="board-title"></span></h3>
+    <p class="err" id="board-err" role="alert" style="display:none"></p>
+    <div id="orders"></div>
+    <button type="button" class="btn sec sm" id="logout">خروج</button>
+  </section>
+
+  <footer class="closing">متوصل بالتخزين.</footer>
+</div>
+
+<script src="../assets/menu.js"></script>
+<script src="../assets/api.js"></script>
+<script>
+const api=window.SB_API, money=window.SB_MONEY, errText=window.SB_ERR, STATUS_AR=window.SB_STATUS_AR;
+let jwt='', timer=null;
+
+const email=document.getElementById('f-email'), pw=document.getElementById('f-pw'), loginBtn=document.getElementById('login');
+function lv(){loginBtn.disabled=!(email.value&&pw.value);}
+email.addEventListener('input',lv);pw.addEventListener('input',lv);
+
+loginBtn.addEventListener('click',async()=>{
+  loginBtn.disabled=true;loginBtn.textContent='...';
+  const err=document.getElementById('login-err');err.style.display='none';
+  try{jwt=await api.login(email.value.trim(),pw.value);pw.value='';showBoard();}
+  catch(e){err.textContent='الدخول فشل. راجع الإيميل وكلمة السر.';err.style.display='';}
+  loginBtn.textContent='دخول';lv();
+});
+document.getElementById('logout').addEventListener('click',()=>{
+  jwt='';if(timer)clearInterval(timer);
+  document.getElementById('board').style.display='none';
+  document.getElementById('login-card').style.display='';
+});
+
+function orderCard(o,couriers){
+  const actions=[];
+  if(o.status==='new')actions.push(`<button type="button" class="btn sm" onclick="act('${o.id}','preparing')">ابدأ التجهيز</button>`);
+  if(o.status==='preparing')actions.push(`<button type="button" class="btn sm" onclick="act('${o.id}','ready')">جاهز</button>`);
+  if(o.status==='ready'||o.status==='assigned')couriers.forEach(c=>actions.push(`<button type="button" class="btn sm${o.courier_id===c.user_id?'':' sec'}" onclick="assign('${o.id}','${c.user_id}')">سلّم لـ ${c.name}</button>`));
+  if(o.status!=='picked_up')actions.push(`<button type="button" class="btn ghost sm" onclick="act('${o.id}','cancelled')">إلغاء</button>`);
+  return `<div class="sbo-line"><div class="sbo-line-h"><b>${o.customer_name}</b><span class="sbo-pill s-${o.status}">${STATUS_AR[o.status]||o.status}</span></div>
+    <p>${o.address}</p>
+    <p class="sbo-links"><a href="tel:${o.phone}" dir="ltr">${o.phone}</a><a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(o.address)}" target="_blank" rel="noreferrer">الخريطة</a></p>
+    ${o.note?`<p class="muted">ملاحظات: ${o.note}</p>`:''}
+    <ul>${o.items.map(i=>`<li>${i.qty} × ${i.name}${i.extras.length?' + '+i.extras.join(' + '):''}</li>`).join('')}</ul>
+    <p><b>${money(o.total_egp)}</b> بدون التوصيل</p>
+    <div class="sbo-actions">${actions.join('')}</div></div>`;
+}
+
+async function reload(){
+  const err=document.getElementById('board-err');
+  try{
+    const [orders,couriers]=await Promise.all([api.listOrders(jwt),api.listCouriers(jwt)]);
+    const list=(orders||[]).filter(o=>o.status!=='delivered'&&o.status!=='cancelled');
+    document.getElementById('board-title').textContent=`الطلبات الحالية (${list.length})`;
+    document.getElementById('orders').innerHTML=list.length?list.map(o=>orderCard(o,couriers||[])).join(''):'<p class="muted">مفيش طلبات دلوقتي.</p>';
+    err.style.display='none';
+  }catch(e){err.textContent=errText(e);err.style.display='';}
+}
+function showBoard(){
+  document.getElementById('login-card').style.display='none';
+  document.getElementById('board').style.display='';
+  reload();if(timer)clearInterval(timer);timer=setInterval(reload,20000);
+}
+async function act(id,status){
+  const err=document.getElementById('board-err');
+  try{await api.setStatus(jwt,id,status);await reload();}catch(e){err.textContent=errText(e);err.style.display='';}
+}
+async function assign(id,courier){
+  const err=document.getElementById('board-err');
+  try{await api.assign(jwt,id,courier);await reload();}catch(e){err.textContent=errText(e);err.style.display='';}
+}
+</script>
+</body>
+</html>

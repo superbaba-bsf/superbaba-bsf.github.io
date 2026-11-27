@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>سوبر بابا · منيو · بني سويف</title>
+<meta name="description" content="سوبر بابا: بيتزا لارج وسندوتشات في بني سويف. اختار طلبك وابعته على واتساب.">
+<link rel="stylesheet" href="assets/shared.css">
+</head>
+<body>
+<div class="wrap">
+  <header class="card" style="margin-top:8px">
+    <h1 style="margin:0">سوبر بابا</h1>
+    <p class="muted" style="margin:4px 0 0">منيو · بني سويف</p>
+    <p style="margin:8px 0 0">بيتزا لارج وسندوتشات. اختار طلبك وابعته على واتساب.</p>
+  </header>
+
+  <div class="sbm-hero">
+    <div>
+      <span class="sbm-latin" dir="ltr">SUPER BABA</span>
+      <h2>كل جوع<br>وله حكاية</h2>
+      <p>بيتزا لارج<br>سندوتشات لحم وفراخ</p>
+      <span dir="ltr" class="sbm-sign">By M.Shaban</span>
+    </div>
+    <img src="assets/hero.png" alt="شخصية سوبر بابا الكرتونية تحمل بيتزا توضيحية">
+  </div>
+
+  <div class="callout"><b>إزاي تطلب</b>اختار الأصناف والكميات في قسم «اطلب»، اكتب اسمك وعنوانك، وابعت الطلب على واتساب. رسوم التوصيل والإجمالي النهائي بنأكدهم معاك على واتساب قبل التنفيذ. مفيش دفع أونلاين من الصفحة.</div>
+
+  <section class="card">
+    <h3 style="margin-top:0">مين احنا</h3>
+    <p style="line-height:1.9;font-size:15px;margin:0 0 10px">في سوبر بابا، كل جوع وله حكاية. بيتزا لارج بإضافات على مزاجك، سندوتشات برجر على الفحم، وكريسبي فراخ مقرمش. اختار حكايتك وسيب الباقي علينا.</p>
+    <div class="facts"><div><b>المدينة</b><span>بني سويف</span></div></div>
+  </section>
+
+  <section class="card">
+    <h3 style="margin-top:0">تصفّح الأقسام</h3>
+    <div class="sbm-filters" role="group" aria-label="أقسام المنيو">
+      <button type="button" data-f="all" class="on" aria-pressed="true">كل الأقسام</button>
+      <button type="button" data-f="pizza" aria-pressed="false">البيتزا اللارج</button>
+      <button type="button" data-f="sandwich" aria-pressed="false">السندوتشات</button>
+    </div>
+    <div id="menu-sections"></div>
+    <p class="sbm-photonote">الصور توضيحية ومصنوعة للتوضيح فقط، وليست صور المنتج الفعلي.</p>
+    <p class="sbm-count" id="menu-count"></p>
+  </section>
+
+  <section class="card sbm-order">
+    <h3 style="margin-top:0">اطلب</h3>
+    <div id="order-pizza"></div>
+    <div id="order-sand"></div>
+    <div class="sbm-total">إجمالي الأصناف: <b id="sum">0 ج.م</b><small>بدون رسوم التوصيل، والإجمالي النهائي بيتأكد معاك قبل التنفيذ</small></div>
+    <label>الاسم<input id="cname" autocomplete="name"></label>
+    <label>العنوان بالتفصيل<textarea id="caddr" rows="2"></textarea></label>
+    <label>ملاحظات (اختياري)<textarea id="cnote" rows="2"></textarea></label>
+    <a id="send" class="sbm-send off" target="_blank" rel="noopener noreferrer" aria-disabled="true">إرسال الطلب على واتساب</a>
+    <p class="muted">الزر بيفتح واتساب برسالة جاهزة بتفاصيل طلبك، وإنت اللي بتبعتها. مفيش دفع أونلاين.</p>
+  </section>
+
+  <section class="card sbm-mapbox">
+    <h3 style="margin-top:0">مناطق التوصيل</h3>
+    <img src="assets/map_center.jpg" alt="صورة جوية بالقمر الصناعي لوسط بني سويف مع الشوارع الرئيسية">
+    <p class="muted" style="margin:6px 0 14px">وسط المدينة من فوق. الصورة اللي تحتها بني سويف كلها بالضفتين.</p>
+    <img src="assets/map_aerial.jpg" alt="صورة جوية بالقمر الصناعي لمدينة بني سويف بالضفتين مع الشوارع الرئيسية">
+    <p>غرب النيل: شارع صلاح سالم، شارع أحمد عرابي، شارع 23 يوليو، شارع عبد السلام عارف، مع الغمراوي وحي الزهور. شرق النيل: بني سويف الجديدة (الحي الأول والحي الثاني). دليل إرشادي للمناطق والنقاط، مش للملاحة ولا بيغطي كل الشوارع، والمواضع تقريبية. التوصيل لعنوانك ورسومه بيتأكدوا معاك على واتساب.</p>
+    <p class="muted" dir="ltr" style="font-size:11px">Imagery: Esri, Maxar, Earthstar Geographics, and the GIS User Community. Road data © OpenStreetMap contributors.</p>
+  </section>
+
+  <footer class="closing">الطلب بيتأكد على واتساب قبل التنفيذ، ورسوم التوصيل بتتحدد حسب عنوانك.</footer>
+</div>
+
+<script src="assets/menu.js"></script>
+<script>
+const ORDER_PHONE='201102707994';
+const M=window.SB_MENU, money=window.SB_MONEY;
+const pizza=M.filter(i=>i.kind==='pizza'), extras=M.filter(i=>i.kind==='extra'), sandwiches=M.filter(i=>i.kind==='sandwich');
+const pizzaMap=Object.fromEntries(pizza.map(i=>[i.num,i]));
+let units=[], sq={}, uidn=1, active='all';
+
+/* ---- menu browsing ---- */
+function row(i){return `<div class="sbm-row">${i.photo?`<img src="${i.photo}" alt="${i.name}" loading="lazy">`:''}<span class="n">${i.num}</span><div class="b"><b>${i.name}</b><span>${i.detail}</span></div><span class="p">${i.price} ج.م</span></div>`;}
+function renderMenu(){
+  const secs=[
+    {id:'pizza',name:'البيتزا اللارج',en:'LARGE PIZZA',items:pizza,extra:extras},
+    {id:'sandwich',name:'السندوتشات',en:'SANDWICHES',items:sandwiches,extra:[]}
+  ].filter(s=>active==='all'||s.id===active);
+  document.getElementById('menu-sections').innerHTML=secs.map(s=>`<section class="sbm-menu"><small dir="ltr">${s.en}</small><h3>${s.name}</h3>${s.items.map(row).join('')}${s.extra.length?`<div class="sbm-extras"><h4>إضافات</h4>${s.extra.map(row).join('')}</div>`:''}</section>`).join('');
+  const total=pizza.length+sandwiches.length, shown=secs.reduce((n,s)=>n+s.items.length,0);
+  document.getElementById('menu-count').textContent=`ظاهر ${shown} من ${total} صنف`;
+}
+document.querySelectorAll('.sbm-filters button').forEach(b=>b.addEventListener('click',()=>{
+  active=b.dataset.f;
+  document.querySelectorAll('.sbm-filters button').forEach(x=>{const on=x===b;x.classList.toggle('on',on);x.setAttribute('aria-pressed',on);});
+  renderMenu();
+}));
+
+/* ---- order builder ---- */
+const unitsOf=n=>units.filter(u=>u.key===n);
+function addUnit(n){if(unitsOf(n).length>=20)return;units.push({uid:uidn++,key:n,x:extras.map(()=>false)});renderOrder();}
+function delUnit(uid){units=units.filter(u=>u.uid!==uid);renderOrder();}
+function delLast(n){const idx=units.map(u=>u.key).lastIndexOf(n);if(idx>=0)units=units.filter((_,i)=>i!==idx);renderOrder();}
+function togX(uid,j){units=units.map(u=>u.uid===uid?{...u,x:u.x.map((v,k)=>k===j?!v:v)}:u);renderOrder();}
+function setS(n,d){sq[n]=Math.max(0,Math.min(20,(sq[n]||0)+d));renderOrder();}
+const unitPrice=u=>pizzaMap[u.key].price+extras.reduce((t,x,j)=>t+(u.x[j]?x.price:0),0);
+
+function renderOrder(){
+  document.getElementById('order-pizza').innerHTML=pizza.map(i=>{
+    const us=unitsOf(i.num);
+    return `<div class="ogroup"><div class="sbm-oline"><span class="sbm-oname">بيتزا لارج ${i.name}<small>${i.price} ج.م</small></span>
+      <span class="sbo-step"><button type="button" aria-label="زود ${i.name}" onclick="addUnit('${i.num}')">+</button><b aria-live="polite">${us.length}</b><button type="button" aria-label="قلل ${i.name}" onclick="delLast('${i.num}')">−</button></span></div>
+      ${us.map((u,k)=>`<div class="sbm-unit"><div class="sbm-unit-h"><span>بيتزا رقم ${k+1}</span><button type="button" class="sbm-del" onclick="delUnit(${u.uid})" aria-label="شيل بيتزا ${i.name} رقم ${k+1}">شيل</button></div>
+      <div class="sbo-chips">${extras.map((x,j)=>`<label class="sbo-chip${u.x[j]?' on':''}"><input type="checkbox" ${u.x[j]?'checked':''} onchange="togX(${u.uid},${j})">${x.name} +${x.price}</label>`).join('')}</div></div>`).join('')}</div>`;
+  }).join('');
+  document.getElementById('order-sand').innerHTML=sandwiches.map(i=>`<div class="ogroup"><div class="sbm-oline"><span class="sbm-oname">${i.name}<small>${i.price} ج.م</small></span>
+    <span class="sbo-step"><button type="button" aria-label="زود ${i.name}" onclick="setS('${i.num}',1)">+</button><b aria-live="polite">${sq[i.num]||0}</b><button type="button" aria-label="قلل ${i.name}" onclick="setS('${i.num}',-1)">−</button></span></div></div>`).join('');
+  const sandChosen=sandwiches.filter(i=>(sq[i.num]||0)>0);
+  const sum=units.reduce((t,u)=>t+unitPrice(u),0)+sandChosen.reduce((t,i)=>t+i.price*(sq[i.num]||0),0);
+  document.getElementById('sum').textContent=money(sum);
+  updateSend(sum,sandChosen);
+}
+function updateSend(sum,sandChosen){
+  const cname=document.getElementById('cname').value, caddr=document.getElementById('caddr').value, cnote=document.getElementById('cnote').value;
+  const ready=(units.length>0||sandChosen.length>0)&&cname.trim().length>1&&caddr.trim().length>4;
+  const a=document.getElementById('send');
+  if(!ready){a.classList.add('off');a.setAttribute('aria-disabled','true');a.removeAttribute('href');return;}
+  const unitLines=units.map((u,k)=>{const nm=pizzaMap[u.key].name;const ex=extras.filter((_,j)=>u.x[j]).map(x=>x.name.startsWith('إضافة ')?x.name:'إضافة '+x.name);return `${k+1}) بيتزا لارج ${nm}${ex.length?' مع '+ex.join(' + '):' (بدون إضافات)'} = ${unitPrice(u)} ج.م`;});
+  const msg=['طلب جديد من منيو سوبر بابا','',...(units.length?['البيتزا (كل بيتزا في سطر مستقل):',...unitLines,'']:[]),...(sandChosen.length?['السندوتشات:',...sandChosen.map(i=>`${sq[i.num]} × ${i.name} = ${i.price*(sq[i.num]||0)} ج.م`),'']:[]),`إجمالي الأصناف: ${sum} ج.م (بدون التوصيل)`,'',`الاسم: ${cname.trim()}`,`العنوان: ${caddr.trim()}`,...(cnote.trim()?[`ملاحظات: ${cnote.trim()}`]:[]),'','برجاء تأكيد التوصيل والإجمالي النهائي.'].join('\n');
+  a.classList.remove('off');a.setAttribute('aria-disabled','false');
+  a.href=`https://wa.me/${ORDER_PHONE}?text=${encodeURIComponent(msg)}`;
+}
+['cname','caddr','cnote'].forEach(id=>document.getElementById(id).addEventListener('input',renderOrder));
+renderMenu();renderOrder();
+</script>
+</body>
+</html>
