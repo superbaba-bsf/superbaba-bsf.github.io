@@ -30,6 +30,15 @@
   <section class="card" id="board" style="display:none">
     <h3 style="margin-top:0"><small class="muted" style="display:block;font-size:12px">المطبخ</small><span id="board-title"></span></h3>
     <p class="err" id="board-err" role="alert" style="display:none"></p>
+    <div id="new-alert" style="display:none;position:sticky;top:0;z-index:50;background:#c0392b;color:#fff;border-radius:14px;padding:14px;margin-bottom:12px;text-align:center;font-weight:700;font-size:18px">
+      <div id="new-alert-t">🔔 أوردر جديد!</div>
+      <button type="button" class="btn" id="new-alert-ok" style="margin-top:8px;background:#fff;color:#c0392b">تمام، استلمت</button>
+    </div>
+    <div class="callout" id="push-box"><b>تنبيهات الأوردرات</b>
+      <p class="muted" id="push-st" style="margin:4px 0">الصوت بيرن ويفضل يرن لحد ما تدوس «تمام» طول ما الصفحة مفتوحة. وفعّل الإشعار عشان يوصلك والصفحة مقفولة.</p>
+      <button type="button" class="btn sm" id="push-btn">🔔 فعّل إشعارات الأوردرات على الجهاز ده</button>
+      <button type="button" class="btn ghost sm" id="snd-test">جرّب الصوت</button>
+    </div>
     <div id="orders"></div>
     <div id="rv-staff"></div>
     <button type="button" class="btn sec sm" id="logout">خروج</button>
@@ -56,7 +65,7 @@ loginBtn.addEventListener('click',async()=>{
   loginBtn.textContent='دخول';lv();
 });
 document.getElementById('logout').addEventListener('click',()=>{
-  jwt='';if(timer)clearInterval(timer);
+  jwt='';seen=null;stopAlarm();if(timer)clearInterval(timer);
   document.getElementById('board').style.display='none';
   document.getElementById('login-card').style.display='';
 });
@@ -91,11 +100,72 @@ function orderCard(o,couriers){
     <div class="sbo-actions">${actions.join('')}</div></div>`;
 }
 
+
+/* ---- new order alarm + push ---- */
+const VAPID='BNZNVDJ-I031D4oyFYUmN388MmWbIzLa1uOg2iuWibC-N7mBXMkycymHCaQPXefqrkZ8qFD_P38KV7Cwt9rL53s';
+let actx=null, alarmTimer=null, seen=null, pending=0;
+function unlockAudio(){try{const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;if(!actx)actx=new AC();if(actx.state==='suspended')actx.resume();}catch(e){}}
+['pointerdown','keydown','touchstart'].forEach(ev=>document.addEventListener(ev,unlockAudio,{passive:true}));
+function ring(){
+  try{
+    unlockAudio();if(!actx||actx.state!=='running')return;
+    const t0=actx.currentTime;
+    [[880,0],[1175,0.25],[880,0.5],[1175,0.75]].forEach(([f,d])=>{
+      const o=actx.createOscillator(),g=actx.createGain();o.type='square';o.frequency.value=f;
+      g.gain.setValueAtTime(0.0001,t0+d);g.gain.exponentialRampToValueAtTime(0.9,t0+d+0.02);g.gain.exponentialRampToValueAtTime(0.0001,t0+d+0.22);
+      o.connect(g);g.connect(actx.destination);o.start(t0+d);o.stop(t0+d+0.25);
+    });
+  }catch(e){}
+  try{navigator.vibrate&&navigator.vibrate([500,200,500,200,500]);}catch(e){}
+}
+function startAlarm(n){
+  pending+=n;
+  const box=document.getElementById('new-alert');
+  document.getElementById('new-alert-t').textContent='🔔 أوردر جديد! ('+pending+')';
+  box.style.display='';
+  if(!alarmTimer){ring();alarmTimer=setInterval(ring,2200);}
+  document.title='🔔 أوردر جديد - سوبر بابا';
+}
+function stopAlarm(){
+  if(alarmTimer){clearInterval(alarmTimer);alarmTimer=null;}
+  pending=0;document.getElementById('new-alert').style.display='none';
+  document.title='المطبخ | سوبر بابا';
+  try{navigator.vibrate&&navigator.vibrate(0);}catch(e){}
+}
+document.getElementById('new-alert-ok').addEventListener('click',stopAlarm);
+document.getElementById('snd-test').addEventListener('click',()=>{unlockAudio();setTimeout(ring,150);});
+function checkNew(list){
+  const ids=new Set(list.map(o=>o.id));
+  if(seen===null){seen=ids;return;}
+  const fresh=list.filter(o=>o.status==='new'&&!seen.has(o.id));
+  list.forEach(o=>seen.add(o.id));
+  if(fresh.length)startAlarm(fresh.length);
+}
+const b64u8=b=>{const p='='.repeat((4-b.length%4)%4);const r=atob((b+p).replace(/-/g,'+').replace(/_/g,'/'));return Uint8Array.from([...r].map(c=>c.charCodeAt(0)));};
+async function pushRegister(ask){
+  const st=document.getElementById('push-st'),btn=document.getElementById('push-btn');
+  try{
+    if(!('serviceWorker' in navigator)||!('PushManager' in window)||!('Notification' in window)){st.textContent='المتصفح ده مش بيدعم الإشعارات. على الآيفون ضيف التطبيق للشاشة الرئيسية الأول.';return;}
+    if(Notification.permission==='default'&&ask)await Notification.requestPermission();
+    if(Notification.permission==='denied'){st.textContent='الإشعارات متقفلة للموقع ده من إعدادات المتصفح. افتحها من الإعدادات.';return;}
+    if(Notification.permission!=='granted')return;
+    const reg=await navigator.serviceWorker.ready;
+    let sub=await reg.pushManager.getSubscription();
+    if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64u8(VAPID)});
+    const j=sub.toJSON();
+    await api.kitchenPushSubscribe(jwt,j.endpoint,j.keys.p256dh,j.keys.auth);
+    st.textContent='✓ إشعارات الأوردرات شغالة على الجهاز ده.';btn.style.display='none';
+  }catch(e){st.textContent='ما قدرتش أفعّل الإشعار. جرّب تاني.';}
+}
+document.getElementById('push-btn').addEventListener('click',()=>{unlockAudio();pushRegister(true);});
+if('serviceWorker' in navigator)navigator.serviceWorker.register('/sw.js').catch(()=>{});
+
 async function reload(){
   const err=document.getElementById('board-err');
   try{
     const [orders,couriers]=await Promise.all([api.listOrders(jwt),api.listCouriers(jwt)]);
     const list=(orders||[]).filter(o=>o.status!=='delivered'&&o.status!=='cancelled');
+    checkNew(list);
     document.getElementById('board-title').textContent=`الطلبات الحالية (${list.length})`;
     document.getElementById('orders').innerHTML=list.length?list.map(o=>orderCard(o,couriers||[])).join(''):'<p class="muted">مفيش طلبات دلوقتي.</p>';
     err.style.display='none';
@@ -105,7 +175,7 @@ async function reload(){
 function showBoard(){
   document.getElementById('login-card').style.display='none';
   document.getElementById('board').style.display='';
-  reload();if(timer)clearInterval(timer);timer=setInterval(reload,20000);
+  reload();if(timer)clearInterval(timer);timer=setInterval(reload,8000);pushRegister(false);
 }
 const escK=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const starsK=n=>n?'★★★★★'.slice(0,n)+'☆☆☆☆☆'.slice(0,5-n):'-';
