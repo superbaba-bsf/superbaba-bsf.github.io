@@ -24,6 +24,10 @@ window.SB_API = (() => {
         p_address: o.address.trim(), p_note: o.note.trim() || null, p_items: o.items,
       });
     },
+    // Full customer-facing tracking payload: status, steps timeline, items, courier.
+    track(token) {
+      return call('/rest/v1/rpc/order_track', 'POST', { p_token: token });
+    },
     async orderStatus(token) {
       const rows = await call('/rest/v1/rpc/order_status', 'POST', { p_token: token });
       return rows && rows.length ? rows[0] : null;
