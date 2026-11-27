@@ -27,6 +27,8 @@
   </nav>
 
   <p class="muted">الصور توضيحية بالذكاء الاصطناعي، مش تصوير للأكل الفعلي.</p>
+  <section class="card" id="lk-card" style="display:none"><div id="lk-box"></div></section>
+  <div id="lk-out"></div>
   <div id="track"></div>
   <p class="muted" id="track-hint" style="display:none">احفظ لينك التتبع ده، تقدر تفتحه من أي موبايل وتشوف طلبك وصل فين.</p>
 
@@ -129,8 +131,10 @@ function startTrack(){
   if(!token){el.innerHTML='';hint.style.display='none';return;}
   window.SB_TRACK.mount(el,token,{share:true});
   hint.style.display='';
+  hint.innerHTML='لينك تتبع طلبك: <a href="../track/#'+token+'">افتح صفحة التتبع</a>. احفظه، تقدر تفتحه من أي موبايل وتشوف طلبك وصل فين.';
 }
 if(token)startTrack();
+else{document.getElementById('lk-card').style.display='';window.SB_TRACK.lookup(document.getElementById('lk-box'),document.getElementById('lk-out'));}
 renderAll();
 </script>
 <script src="../assets/pwa.js?v=4"></script>
