@@ -137,7 +137,7 @@ footer.closing{text-align:center;color:var(--muted);font-size:13px;margin:24px 0
  78%{transform:perspective(800px) translateY(-12px) rotate(0) rotateY(180deg)}
  100%{transform:perspective(800px) translateY(0) rotate(0) rotateY(360deg)}
 }
-.sbm-hero img,.sbo-hero img{transform-origin:50% 60%;animation:sb-pop .7s ease-out both,sb-act 3s ease-in-out .9s infinite;will-change:transform}
+.sbm-hero .sb-fig,.sbo-hero img{transform-origin:50% 60%;animation:sb-pop .7s ease-out both,sb-act 3s ease-in-out .9s infinite;will-change:transform}
 
 
 /* Welcome bubble: pops in with each spin */
@@ -150,4 +150,15 @@ footer.closing{text-align:center;color:var(--muted);font-size:13px;margin:24px 0
  100%{opacity:0;transform:translateX(-50%) scale(.9)}
 }
 @media(max-width:700px){.sbm-hero::after{font-size:11px;padding:5px 9px;top:6px}}
-@media(prefers-reduced-motion:reduce){.sbm-hero img,.sbo-hero img{animation:none}.sbm-hero::after{animation:none;opacity:1;transform:translateX(-50%)}}
+@media(prefers-reduced-motion:reduce){.sbm-hero .sb-fig,.sbo-hero img,.sbm-hero .sb-cape{animation:none}.sbm-hero::after{animation:none;opacity:1;transform:translateX(-50%)}}
+
+/* Cape flutter: a copy of the figure, clipped to the cape, waves from the shoulder */
+.sbm-hero .sb-fig{position:relative}
+.sbm-hero .sb-cape{position:absolute;left:0;top:0;clip-path:polygon(69% 19%,80% 23%,93% 30%,98% 40%,93% 53%,84% 62%,75% 67%,66% 60%,55% 50%,56% 38%,66% 32%);transform-origin:60% 28%;pointer-events:none;animation:sb-flap 1.3s ease-in-out infinite}
+@keyframes sb-flap{
+ 0%{transform:skewY(0) rotate(0) scaleX(1)}
+ 25%{transform:skewY(-3deg) rotate(1.5deg) scaleX(1.03)}
+ 50%{transform:skewY(2deg) rotate(-1deg) scaleX(.99)}
+ 75%{transform:skewY(-2deg) rotate(2deg) scaleX(1.04)}
+ 100%{transform:skewY(0) rotate(0) scaleX(1)}
+}
