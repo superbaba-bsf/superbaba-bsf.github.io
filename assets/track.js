@@ -68,16 +68,16 @@ window.SB_TRACK = (() => {
       ${cancelled ? '<div class="callout warn"><b>الطلب اتلغى</b>لو ده مش متوقع، كلمنا على واتساب.</div>' : `<ol class="trk-steps">${steps}</ol>`}
       ${o.courier_name && !cancelled ? `<div class="callout"><b>المندوب: ${esc(o.courier_name)}</b>هو اللي جاي بطلبك.</div>` : ''}
       <div class="trk-meta"><span>آخر تحديث: ${ago(o.updated_at)}</span><span>${done || cancelled ? '' : 'الصفحة بتتحدّث لوحدها'}</span></div>
-      <div class="trk-sum">
+      ${o.items ? `<div class="trk-sum">
         <b>تفاصيل الطلب</b>
         <ul>${items}</ul>
         <p class="trk-total"><span>إجمالي الأصناف</span><b>${money(o.total_egp)}</b></p>
         <p class="muted">بدون رسوم التوصيل. الإجمالي النهائي بيتأكد معاك على واتساب.</p>
         ${o.address ? `<p class="muted">العنوان: ${esc(o.address)}</p>` : ''}
-      </div>
+      </div>` : '<p class="muted">لعرض تفاصيل الطلب افتح لينك التتبع، أو اكتب كود الطلب مع رقم التليفون.</p>'}
       <div class="trk-share">
         <a class="btn sec sm" href="${wa}" target="_blank" rel="noopener noreferrer">كلمنا على واتساب</a>
-        ${opts.share ? `<button type="button" class="btn ghost sm" data-trk-copy>انسخ لينك التتبع</button>` : ''}
+        ${opts.share && opts.canCopy !== false ? `<button type="button" class="btn ghost sm" data-trk-copy>انسخ لينك التتبع</button>` : ''}
       </div>
       <p class="muted" data-trk-msg style="display:none"></p>`;
   }
@@ -90,9 +90,10 @@ window.SB_TRACK = (() => {
         el.innerHTML = '<div class="callout warn"><b>مفيش طلب بالرقم ده</b>راجع اللينك اللي وصلك من سوبر بابا.</div>';
         return false;
       }
+      if (o.items === undefined) o.items = null;
       const h = html(o, opts);
       if (h !== last) { el.innerHTML = h; last = h; }
-      const btn = el.querySelector('[data-trk-copy]');
+      const btn = typeof token === 'string' ? el.querySelector('[data-trk-copy]') : null;
       if (btn && !btn.dataset.bound) {
         btn.dataset.bound = '1';
         btn.addEventListener('click', async () => {
@@ -106,7 +107,7 @@ window.SB_TRACK = (() => {
     };
     const tick = async () => {
       try {
-        const o = await window.SB_API.track(token);
+        const o = typeof token === 'function' ? await token() : await window.SB_API.track(token);
         if (paint(o) && timer) { clearInterval(timer); timer = null; }
       } catch (e) { /* keep last good render */ }
     };
@@ -128,5 +129,51 @@ window.SB_TRACK = (() => {
     if (m) return m[1];
     return v;
   }
-  return { html, mount, tokenFromLocation, tokenFromPaste, time, ago };
+  const KEY = 'sb-order-token.v1';
+  const finished = st => st === 'delivered' || st === 'cancelled';
+  const normPhone = v => String(v || '').replace(/[\u0660-\u0669]/g, d => d.charCodeAt(0) - 0x660).replace(/\D/g, '');
+
+  // Status banner on any page: shows when this phone remembers an order.
+  async function banner(el, trackUrl) {
+    const tok = localStorage.getItem(KEY);
+    if (!tok || !el) return;
+    let o;
+    try { o = await window.SB_API.track(tok); } catch (e) { return; }
+    if (!o) { localStorage.removeItem(KEY); return; }
+    const age = Date.now() - new Date(o.updated_at).getTime();
+    if (finished(o.status) && age > 3 * 3600 * 1000) { localStorage.removeItem(KEY); return; }
+    const head = o.status === 'cancelled' ? HEADS.cancelled : HEADS[o.status] || 'طلبك';
+    el.innerHTML = `<a class="callout trk-banner" href="${trackUrl}#${tok}" style="display:block;text-decoration:none"><b>طلبك ${esc(o.code)}: ${esc(head)}</b>اضغط لتتابع طلبك خطوة بخطوة</a>`;
+    if (!finished(o.status)) setTimeout(() => banner(el, trackUrl), 20000);
+  }
+
+  // "تتبع طلبي" box: phone (+ optional order code). Result renders into outEl.
+  function lookup(boxEl, outEl) {
+    boxEl.innerHTML = `<h3 style="margin-top:0">تتبّع طلبي</h3>
+      <p class="muted">اكتب رقم التليفون اللي طلبت بيه، وهتشوف حالة طلبك فورًا.</p>
+      <div class="sbo-form">
+        <label>رقم التليفون<input id="lk-phone" type="tel" inputmode="tel" dir="ltr" autocomplete="tel" placeholder="01xxxxxxxxx"></label>
+        <label>كود الطلب (اختياري، لو عاوز تفاصيل الطلب)<input id="lk-code" dir="ltr" placeholder="SB-XXXXXX"></label>
+      </div>
+      <button type="button" class="btn" id="lk-go">اعرض طلبي</button>
+      <p class="err" id="lk-err" role="alert" style="display:none"></p>`;
+    let live = null;
+    const err = m => { const e = boxEl.querySelector('#lk-err'); e.textContent = m; e.style.display = m ? '' : 'none'; };
+    boxEl.querySelector('#lk-go').addEventListener('click', async () => {
+      err(''); if (live) live.stop();
+      const phone = normPhone(boxEl.querySelector('#lk-phone').value);
+      const code = boxEl.querySelector('#lk-code').value.trim();
+      if (phone.length < 8) { err('اكتب رقم التليفون صح.'); return; }
+      let rows;
+      try { rows = await window.SB_API.find(phone, code); } catch (e) { err('حصلت مشكلة. جرّب تاني.'); return; }
+      if (!rows || !rows.length) { outEl.innerHTML = '<div class="callout warn"><b>مفيش طلب حديث على الرقم ده</b>بندوّر في آخر 24 ساعة. لو لسه طالب، كلمنا على واتساب.</div>'; return; }
+      const o = rows[0];
+      if (o.token) { localStorage.setItem(KEY, o.token); live = mount(outEl, o.token, { share: true }); return; }
+      live = mount(outEl, async () => {
+        const r = await window.SB_API.find(phone, code);
+        return r && r[0] ? Object.assign({}, r[0], { items: null }) : null;
+      }, { share: false, canCopy: false });
+    });
+  }
+  return { banner, lookup, html, mount, tokenFromLocation, tokenFromPaste, time, ago };
 })();
