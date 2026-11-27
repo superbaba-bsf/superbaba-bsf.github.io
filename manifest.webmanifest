@@ -18,5 +18,31 @@
       "purpose": "any"
     }
   ],
-  "id": "/"
+  "id": "/",
+  "shortcuts": [
+    {
+      "name": "تتبّع طلبك",
+      "short_name": "تتبّع",
+      "url": "/track/?source=app",
+      "icons": [
+        {
+          "src": "/assets/hero.png",
+          "sizes": "1254x1254",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "اطلب أونلاين",
+      "short_name": "اطلب",
+      "url": "/order/?source=app",
+      "icons": [
+        {
+          "src": "/assets/hero.png",
+          "sizes": "1254x1254",
+          "type": "image/png"
+        }
+      ]
+    }
+  ]
 }
