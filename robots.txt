@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /kitchen/
+Disallow: /courier/
+Sitemap: https://superbaba-bsf.github.io/sitemap.xml
