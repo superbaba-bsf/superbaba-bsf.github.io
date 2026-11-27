@@ -5,7 +5,7 @@
   const imgs = fig.querySelectorAll('img');
   const names = ['pizza', 'burger', 'crispy'];
   const urls = [];
-  const load = n => fetch('assets/hero-' + n + '.b64.txt').then(r => r.text()).then(t => {
+  const load = n => fetch('assets/assets/hero-' + n + '.b64.txt').then(r => r.text()).then(t => {
     const bin = atob(t.trim()), u = new Uint8Array(bin.length);
     for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
     return URL.createObjectURL(new Blob([u], { type: 'image/webp' }));
