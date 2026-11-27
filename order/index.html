@@ -11,12 +11,14 @@
   <div class="sbo-hero"><img src="../assets/hero.png" alt=""><div><h1>سوبر بابا</h1><p>بيتزا وسندوتشات، بني سويف</p></div></div>
   <nav class="nav" aria-label="الصفحات">
     <a href="../order/" class="on" aria-current="page">العميل</a>
+    <a href="../track/">تتبّع الطلب</a>
     <a href="../kitchen/">المطبخ</a>
     <a href="../courier/">المندوب</a>
   </nav>
 
   <p class="muted">الصور توضيحية بالذكاء الاصطناعي، مش تصوير للأكل الفعلي.</p>
   <div id="track"></div>
+  <p class="muted" id="track-hint" style="display:none">احفظ لينك التتبع ده، تقدر تفتحه من أي موبايل وتشوف طلبك وصل فين.</p>
 
   <section class="card">
     <h3 style="margin-top:0"><small class="muted" style="display:block;font-size:12px">اختار</small>بيتزا لارج</h3>
@@ -51,6 +53,7 @@
 
 <script src="../assets/menu.js"></script>
 <script src="../assets/api.js"></script>
+<script src="../assets/track.js"></script>
 <script>
 const M=window.SB_MENU, money=window.SB_MONEY, api=window.SB_API, errText=window.SB_ERR, STATUS_AR=window.SB_STATUS_AR;
 const byId=Object.fromEntries(M.map(m=>[m.id,m])), extras=M.filter(m=>m.kind==='extra');
@@ -110,16 +113,13 @@ document.getElementById('send').addEventListener('click',async()=>{
 });
 
 /* ---- live tracking ---- */
-let trackTimer=null;
-async function tickTrack(){
-  if(!token)return;
-  try{
-    const r=await api.orderStatus(token);
-    const el=document.getElementById('track');
-    if(r)el.innerHTML=`<div class="callout"><b>${STATUS_AR[r.status]||r.status}</b>إجمالي الأصناف ${money(r.total_egp)} بدون التوصيل.${r.courier_name?` المندوب: ${r.courier_name}.`:''} الصفحة بتتحدّث لوحدها.</div>`;
-  }catch(e){}
+function startTrack(){
+  const el=document.getElementById('track');
+  const hint=document.getElementById('track-hint');
+  if(!token){el.innerHTML='';hint.style.display='none';return;}
+  window.SB_TRACK.mount(el,token,{share:true});
+  hint.style.display='';
 }
-function startTrack(){tickTrack();if(trackTimer)clearInterval(trackTimer);trackTimer=setInterval(tickTrack,20000);}
 if(token)startTrack();
 renderAll();
 </script>
