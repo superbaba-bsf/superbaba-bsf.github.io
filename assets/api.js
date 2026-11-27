@@ -28,6 +28,10 @@ window.SB_API = (() => {
     track(token) {
       return call('/rest/v1/rpc/order_track', 'POST', { p_token: token });
     },
+    // Find recent orders by phone (last 24h). Phone alone returns status only; phone + order code also returns the full-view token.
+    find(phone, code) {
+      return call('/rest/v1/rpc/order_find', 'POST', { p_phone: phone, p_code: code || null });
+    },
     async orderStatus(token) {
       const rows = await call('/rest/v1/rpc/order_status', 'POST', { p_token: token });
       return rows && rows.length ? rows[0] : null;
