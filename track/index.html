@@ -4,6 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>سوبر بابا · تتبّع طلبك</title>
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#103d3b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Super Baba">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="apple-touch-icon" href="../assets/hero.png">
+<link rel="icon" href="../assets/hero.png" type="image/png">
 <link rel="stylesheet" href="../assets/shared.css">
 </head>
 <body>
@@ -16,16 +24,7 @@
     <a href="../courier/">المندوب</a>
   </nav>
 
-  <section class="card" id="paste" style="display:none">
-    <h3 style="margin-top:0">تتبّع طلبك</h3>
-    <p class="muted">الصق لينك التتبع اللي وصلك من سوبر بابا على واتساب.</p>
-    <div class="sbo-form">
-      <label>لينك التتبع أو كود الطلب<input id="tinput" dir="ltr" placeholder="https://superbaba-bsf.github.io/track/#..."></label>
-    </div>
-    <button type="button" class="btn" id="go">اعرض الطلب</button>
-    <p class="err" id="perr" role="alert" style="display:none"></p>
-  </section>
-
+  <section class="card" id="live-lookup"></section>
   <section class="card" id="trkcard">
     <div id="trk"></div>
   </section>
@@ -39,18 +38,13 @@
 <script>
 const T=window.SB_TRACK;
 const box=document.getElementById('trk');
-function boot(tok){
-  if(!tok){ document.getElementById('paste').style.display=''; box.innerHTML=''; return; }
-  document.getElementById('paste').style.display='none';
-  T.mount(box,tok,{share:true});
-}
-document.getElementById('go').addEventListener('click',()=>{
-  const t=T.tokenFromPaste(document.getElementById('tinput').value);
-  if(!t){ const e=document.getElementById('perr'); e.textContent='الصق اللينك أو الكود.'; e.style.display=''; return; }
-  history.replaceState(null,'','#'+t); boot(t);
-});
-document.getElementById('tinput').addEventListener('keydown',e=>{ if(e.key==='Enter') document.getElementById('go').click(); });
-boot(T.tokenFromLocation());
+T.lookup(document.getElementById('live-lookup'),box);
+const tok=T.tokenFromLocation()||localStorage.getItem('sb-order-token.v1')||'';
+if(tok){ localStorage.setItem('sb-order-token.v1',tok); T.mount(box,tok,{share:true}); }
+const card=document.getElementById('trkcard');
+const sync=()=>{card.style.display=box.innerHTML.trim()?'':'none';};
+new MutationObserver(sync).observe(box,{childList:true,subtree:true}); sync();
 </script>
+<script src="../assets/pwa.js"></script>
 </body>
 </html>
