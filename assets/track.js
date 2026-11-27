@@ -75,6 +75,7 @@ window.SB_TRACK = (() => {
         <p class="muted">بدون رسوم التوصيل. الإجمالي النهائي بيتأكد معاك على واتساب.</p>
         ${o.address ? `<p class="muted">العنوان: ${esc(o.address)}</p>` : ''}
       </div>` : '<p class="muted">لعرض تفاصيل الطلب افتح لينك التتبع، أو اكتب كود الطلب مع رقم التليفون.</p>'}
+      ${!done && !cancelled && opts.share && 'Notification' in window && Notification.permission === 'default' ? '<button type="button" class="btn ghost sm" data-trk-notify>🔔 نبّهني بصوت لما الطلب يوصل</button>' : ''}
       ${done ? '<div class="rv-box" data-review></div>' : ''}
       <div class="trk-share">
         <a class="btn sec sm" href="${wa}" target="_blank" rel="noopener noreferrer">كلمنا على واتساب</a>
@@ -108,7 +109,7 @@ window.SB_TRACK = (() => {
     try { r = await window.SB_API.reviewGet(token); } catch (e) { return; }
     if (!r || !r.can_review) return;
     const thanks = (rs, cs, c) => {
-      box.innerHTML = '<h3 style="margin-top:0">شكرًا على تقييمك 💚</h3><p>المطعم: <span class="rv-static">' + stars(rs) + '</span></p>' +
+      box.innerHTML = '<h3 style="margin-top:0">شكرًا على تقييمك 💚</h3><p>الأكل: <span class="rv-static">' + stars(rs) + '</span></p>' +
         (cs ? '<p>المندوب: <span class="rv-static">' + stars(cs) + '</span></p>' : '') + (c ? '<p class="muted">' + esc(c) + '</p>' : '');
     };
     if (r.done) { thanks(r.restaurant_stars, r.courier_stars, r.comment); return; }
@@ -117,7 +118,7 @@ window.SB_TRACK = (() => {
       '<label class="rv-c">تعليق (اختياري)<textarea maxlength="400" rows="3" placeholder="اكتب رأيك هنا"></textarea></label>' +
       '<button type="button" class="btn" data-rv-send>ابعت التقييم</button><p class="err" data-rv-err role="alert" style="display:none"></p>';
     const rows = box.querySelector('[data-rv-rows]');
-    rows.appendChild(starPicker('المطعم', v => { rs = v; }));
+    rows.appendChild(starPicker('الأكل', v => { rs = v; }));
     if (r.has_courier) rows.appendChild(starPicker('المندوب', v => { cs = v; }));
     const err = box.querySelector('[data-rv-err]');
     box.querySelector('[data-rv-send]').addEventListener('click', async ev => {
@@ -133,9 +134,60 @@ window.SB_TRACK = (() => {
       }
     });
   }
+
+  // Delivery alert: chime + vibrate + notification + open the review box.
+  let actx = null;
+  function unlockAudio() {
+    try {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      if (!actx) actx = new AC();
+      if (actx.state === 'suspended') actx.resume();
+    } catch (e) {}
+  }
+  ['pointerdown', 'keydown', 'touchstart'].forEach(ev => document.addEventListener(ev, unlockAudio, { passive: true }));
+  function chime() {
+    try {
+      unlockAudio();
+      if (!actx || actx.state !== 'running') return;
+      const t0 = actx.currentTime;
+      [[784, 0], [988, 0.18], [1175, 0.36]].forEach(([f, d]) => {
+        const o = actx.createOscillator(), g = actx.createGain();
+        o.type = 'sine'; o.frequency.value = f;
+        g.gain.setValueAtTime(0.0001, t0 + d);
+        g.gain.exponentialRampToValueAtTime(0.35, t0 + d + 0.03);
+        g.gain.exponentialRampToValueAtTime(0.0001, t0 + d + 0.6);
+        o.connect(g); g.connect(actx.destination);
+        o.start(t0 + d); o.stop(t0 + d + 0.65);
+      });
+    } catch (e) {}
+  }
+  async function notify(title, body) {
+    try {
+      if (!('Notification' in window) || Notification.permission !== 'granted') return;
+      const opts = { body, icon: '/assets/hero.png', tag: 'sb-delivered', renotify: true, lang: 'ar', dir: 'rtl' };
+      const reg = navigator.serviceWorker && await navigator.serviceWorker.getRegistration();
+      if (reg && reg.showNotification) reg.showNotification(title, opts); else new Notification(title, opts);
+    } catch (e) {}
+  }
+  function alertDelivered(el) {
+    const title = 'وصل طلبك! قيّمنا والمندوب';
+    chime();
+    try { navigator.vibrate && navigator.vibrate([200, 100, 200, 100, 300]); } catch (e) {}
+    notify(title, 'بالهنا والشفا. قيّم الأكل والمندوب دلوقتي.');
+    const old = document.title; document.title = '💚 ' + title;
+    setTimeout(() => { document.title = old; }, 8000);
+    setTimeout(() => {
+      const box = el.querySelector('[data-review]');
+      if (!box) return;
+      box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      box.classList.add('rv-pop');
+      const b = box.querySelector('.rv-stars button'); if (b) b.focus({ preventScroll: true });
+    }, 700);
+  }
   function mount(el, token, opts) {
     opts = opts || {};
-    let timer = null, last = '';
+    let timer = null, last = '', prev = null;
     const paint = o => {
       if (!o) {
         el.innerHTML = '<div class="callout warn"><b>مفيش طلب بالرقم ده</b>راجع اللينك اللي وصلك من سوبر بابا.</div>';
@@ -154,6 +206,18 @@ window.SB_TRACK = (() => {
           if (msg) { msg.textContent = 'اللينك اتنسخ.'; msg.style.display = ''; }
         });
       }
+      const nb = el.querySelector('[data-trk-notify]');
+      if (nb && !nb.dataset.bound) {
+        nb.dataset.bound = '1';
+        nb.addEventListener('click', async () => {
+          unlockAudio();
+          try { await Notification.requestPermission(); } catch (e) {}
+          chime();
+          nb.style.display = 'none';
+        });
+      }
+      if (o.status === 'delivered' && prev && prev !== 'delivered' && prev !== 'cancelled' && typeof token === 'string') alertDelivered(el);
+      prev = o.status;
       if (o.status === 'delivered' && typeof token === 'string') {
         const box = el.querySelector('[data-review]');
         if (box && !box.dataset.init) { box.dataset.init = '1'; initReview(box, token); }
