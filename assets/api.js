@@ -52,6 +52,13 @@ window.SB_API = (() => {
     assign(token, order, courier) {
       return call('/rest/v1/rpc/staff_assign', 'POST', { p_order: order, p_courier: courier }, token);
     },
+    reviewGet(token) { return call('/rest/v1/rpc/review_get', 'POST', { p_token: token }); },
+    reviewSubmit(token, restaurant, courier, comment) {
+      return call('/rest/v1/rpc/review_submit', 'POST', { p_token: token, p_restaurant: restaurant, p_courier: courier, p_comment: comment || null });
+    },
+    reviewsPublic() { return call('/rest/v1/rpc/reviews_public', 'POST', {}); },
+    reviewsStaff(token) { return call('/rest/v1/rpc/reviews_staff', 'POST', {}, token); },
+    reviewHide(token, id, hidden) { return call('/rest/v1/rpc/review_hide', 'POST', { p_id: id, p_hidden: hidden }, token); },
     advance(token, order) {
       return call('/rest/v1/rpc/courier_advance', 'POST', { p_order: order }, token);
     },
