@@ -28,14 +28,39 @@
   help.querySelector('#sb-help-x').addEventListener('click', close);
 
   window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferred = e; });
-  bar.querySelector('#sb-install-btn').addEventListener('click', async () => {
-    if (deferred) {
-      deferred.prompt();
-      try { await deferred.userChoice; } catch (_) {}
-      deferred = null;
-    } else {
-      help.style.display = 'flex';
-    }
-  });
+  const android = /Android/i.test(ua);
+  const btn = bar.querySelector('#sb-install-btn');
+  const pwaInstall = async () => {
+    if (deferred) { deferred.prompt(); try { await deferred.userChoice; } catch (_) {} deferred = null; }
+    else help.style.display = 'flex';
+  };
+  const downloadApk = async () => {
+    btn.disabled = true; btn.textContent = 'جاري التحميل...';
+    try {
+      let b64 = '';
+      for (let i = 0; i < 11; i++) {
+        const r = await fetch('/apk/p' + String(i).padStart(2, '0') + '.txt', { cache: 'force-cache' });
+        if (!r.ok) throw new Error('part ' + i);
+        b64 += (await r.text()).replace(/\s+/g, '');
+      }
+      const bin = atob(b64), u = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
+      const blob = new Blob([u], { type: 'application/vnd.android.package-archive' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob); a.download = 'super-baba.apk';
+      document.body.appendChild(a); a.click(); a.remove();
+      btn.textContent = 'تم التحميل';
+      note.style.display = 'block';
+    } catch (e) {
+      btn.textContent = 'تحميل التطبيق';
+      await pwaInstall();
+    } finally { btn.disabled = false; }
+  };
+  const note = document.createElement('div');
+  note.style.cssText = 'display:none;position:sticky;top:60px;z-index:9998;background:#fff4dc;color:#222;padding:10px 12px;font-size:14px;line-height:1.7;border-bottom:1px solid #e0c9a0';
+  note.innerHTML = 'افتح الملف <b>super-baba.apk</b> من التنزيلات واضغط <b>تثبيت</b>. لو ظهر تحذير، اسمح بالتثبيت من المتصفح ثم ارجع واضغط تثبيت. <a href="#" id="sb-pwa-link" style="color:#103d3b;font-weight:700">أو ثبّت من المتصفح</a>';
+  bar.after(note);
+  note.querySelector('#sb-pwa-link').addEventListener('click', e => { e.preventDefault(); pwaInstall(); });
+  btn.addEventListener('click', () => { android ? downloadApk() : pwaInstall(); });
   window.addEventListener('appinstalled', () => { bar.remove(); help.remove(); });
 })();
