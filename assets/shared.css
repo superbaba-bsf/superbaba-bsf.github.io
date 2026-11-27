@@ -126,3 +126,18 @@ footer.closing{text-align:center;color:var(--muted);font-size:13px;margin:24px 0
 .sbo-pill.s-assigned,.sbo-pill.s-picked_up{background:var(--orange);color:#fff}
 .sbo-pill.s-delivered{background:var(--green);color:#fff}
 .sbo-pill.s-cancelled{background:#f4e0da;color:var(--red)}
+
+/* Super Baba character: pop-in, bob and sway, then a spin with the pizza every few seconds */
+@keyframes sb-pop{0%{opacity:0;scale:.6}60%{opacity:1;scale:1.08}100%{opacity:1;scale:1}}
+@keyframes sb-act{
+ 0%{transform:perspective(800px) translateY(0) rotate(0) rotateY(0)}
+ 18%{transform:perspective(800px) translateY(-8px) rotate(-1.5deg) rotateY(0)}
+ 36%{transform:perspective(800px) translateY(0) rotate(0) rotateY(0)}
+ 54%{transform:perspective(800px) translateY(-8px) rotate(1.5deg) rotateY(0)}
+ 72%{transform:perspective(800px) translateY(0) rotate(0) rotateY(0)}
+ 78%{transform:perspective(800px) translateY(-6px) rotate(0) rotateY(0)}
+ 92%{transform:perspective(800px) translateY(-14px) rotate(0) rotateY(360deg)}
+ 100%{transform:perspective(800px) translateY(0) rotate(0) rotateY(360deg)}
+}
+.sbm-hero img,.sbo-hero img{transform-origin:50% 60%;animation:sb-pop .7s ease-out both,sb-act 9s ease-in-out .9s infinite;will-change:transform}
+@media(prefers-reduced-motion:reduce){.sbm-hero img,.sbo-hero img{animation:none}}
