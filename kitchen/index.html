@@ -104,12 +104,10 @@ function orderCard(o,couriers){
 /* ---- new order alarm + push ---- */
 const VAPID='BNZNVDJ-I031D4oyFYUmN388MmWbIzLa1uOg2iuWibC-N7mBXMkycymHCaQPXefqrkZ8qFD_P38KV7Cwt9rL53s';
 let actx=null, alarmTimer=null, seen=null, pending=0, ringWait=false;
-function unlockAudio(){try{const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;if(!actx)actx=new AC();if(actx.state==='suspended')actx.resume();if(ringWait&&alarmTimer){ringWait=false;setTimeout(ring,120);}}catch(e){}}
+function unlockAudio(){try{const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;if(!actx)actx=new AC();if(actx.state==='suspended'){actx.resume().then(()=>{if(ringWait&&alarmTimer&&actx.state==='running'){ringWait=false;tone();}}).catch(()=>{});}else if(ringWait&&alarmTimer){ringWait=false;tone();}}catch(e){}}
 ['pointerdown','keydown','touchstart'].forEach(ev=>document.addEventListener(ev,unlockAudio,{passive:true}));
-function ring(){
-  try{navigator.vibrate&&navigator.vibrate([500,200,500,200,500]);}catch(e){}
+function tone(){
   try{
-    unlockAudio();
     if(!actx||actx.state!=='running'){ringWait=true;return;}
     const t0=actx.currentTime;
     [[880,0],[1175,0.25],[880,0.5],[1175,0.75]].forEach(([f,d])=>{
@@ -118,6 +116,10 @@ function ring(){
       o.connect(g);g.connect(actx.destination);o.start(t0+d);o.stop(t0+d+0.25);
     });
   }catch(e){}
+}
+function ring(){
+  try{navigator.vibrate&&navigator.vibrate([500,200,500,200,500]);}catch(e){}
+  tone();
 }
 function startAlarm(n){
   pending+=n;
