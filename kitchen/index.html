@@ -114,10 +114,10 @@ async function loadReviews(){
   try{
     const r=await api.reviewsStaff(jwt);
     const rest=r.restaurant||{};
-    box.innerHTML=`<h3>التقييمات</h3><p><b>المطعم: ${rest.count?Number(rest.avg).toFixed(1)+' ★ ('+rest.count+')':'لسه مفيش'}</b></p>`+
+    box.innerHTML=`<h3>التقييمات</h3><p><b>الأكل: ${rest.count?Number(rest.avg).toFixed(1)+' ★ ('+rest.count+')':'لسه مفيش'}</b></p>`+
       (r.couriers&&r.couriers.length?'<p>'+r.couriers.map(c=>`${escK(c.name)}: ${Number(c.avg).toFixed(1)} ★ (${c.count})`).join(' · ')+'</p>':'')+
       (r.reviews||[]).map(x=>`<div class="sbo-line"><div class="sbo-line-h"><b>${escK(x.name||'عميل')} <small class="muted">${escK(x.code)}</small></b><span class="sbo-pill">${x.hidden?'مخفي':'ظاهر'}</span></div>
-        <p>المطعم ${starsK(x.restaurant_stars)}${x.courier_name?' · '+escK(x.courier_name)+' '+starsK(x.courier_stars):''}</p>${x.comment?'<p>'+escK(x.comment)+'</p>':''}
+        <p>الأكل ${starsK(x.restaurant_stars)}${x.courier_name?' · '+escK(x.courier_name)+' '+starsK(x.courier_stars):''}</p>${x.comment?'<p>'+escK(x.comment)+'</p>':''}
         <div class="sbo-actions"><button type="button" class="btn ghost sm" onclick="hideReview('${x.id}',${!x.hidden})">${x.hidden?'أظهر':'اخفي'}</button></div></div>`).join('');
   }catch(e){}
 }
