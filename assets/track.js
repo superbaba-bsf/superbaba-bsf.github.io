@@ -75,6 +75,7 @@ window.SB_TRACK = (() => {
         <p class="muted">بدون رسوم التوصيل. الإجمالي النهائي بيتأكد معاك على واتساب.</p>
         ${o.address ? `<p class="muted">العنوان: ${esc(o.address)}</p>` : ''}
       </div>` : '<p class="muted">لعرض تفاصيل الطلب افتح لينك التتبع، أو اكتب كود الطلب مع رقم التليفون.</p>'}
+      ${done ? '<div class="rv-box" data-review></div>' : ''}
       <div class="trk-share">
         <a class="btn sec sm" href="${wa}" target="_blank" rel="noopener noreferrer">كلمنا على واتساب</a>
         ${opts.share && opts.canCopy !== false ? `<button type="button" class="btn ghost sm" data-trk-copy>انسخ لينك التتبع</button>` : ''}
@@ -82,6 +83,56 @@ window.SB_TRACK = (() => {
       <p class="muted" data-trk-msg style="display:none"></p>`;
   }
 
+
+  // Review box: shown after delivery. One review per order, no login (the tracking token is the key).
+  function stars(n) { return '★★★★★'.slice(0, n) + '☆☆☆☆☆'.slice(0, 5 - n); }
+  function starPicker(label, onPick) {
+    const wrap = document.createElement('div');
+    wrap.className = 'rv-row';
+    wrap.innerHTML = '<b>' + label + '</b><div class="rv-stars" role="radiogroup" aria-label="' + label + '"></div>';
+    const holder = wrap.querySelector('.rv-stars');
+    let val = 0;
+    for (let i = 1; i <= 5; i++) {
+      const b = document.createElement('button');
+      b.type = 'button'; b.textContent = '★'; b.setAttribute('aria-label', i + ' من 5');
+      b.addEventListener('click', () => {
+        val = i; onPick(i);
+        [...holder.children].forEach((x, k) => x.classList.toggle('on', k < i));
+      });
+      holder.appendChild(b);
+    }
+    return wrap;
+  }
+  async function initReview(box, token) {
+    let r;
+    try { r = await window.SB_API.reviewGet(token); } catch (e) { return; }
+    if (!r || !r.can_review) return;
+    const thanks = (rs, cs, c) => {
+      box.innerHTML = '<h3 style="margin-top:0">شكرًا على تقييمك 💚</h3><p>المطعم: <span class="rv-static">' + stars(rs) + '</span></p>' +
+        (cs ? '<p>المندوب: <span class="rv-static">' + stars(cs) + '</span></p>' : '') + (c ? '<p class="muted">' + esc(c) + '</p>' : '');
+    };
+    if (r.done) { thanks(r.restaurant_stars, r.courier_stars, r.comment); return; }
+    let rs = 0, cs = 0;
+    box.innerHTML = '<h3 style="margin-top:0">قيّم طلبك</h3><p class="muted">رأيك بيساعدنا نبقى أحسن.</p><div data-rv-rows></div>' +
+      '<label class="rv-c">تعليق (اختياري)<textarea maxlength="400" rows="3" placeholder="اكتب رأيك هنا"></textarea></label>' +
+      '<button type="button" class="btn" data-rv-send>ابعت التقييم</button><p class="err" data-rv-err role="alert" style="display:none"></p>';
+    const rows = box.querySelector('[data-rv-rows]');
+    rows.appendChild(starPicker('المطعم', v => { rs = v; }));
+    if (r.has_courier) rows.appendChild(starPicker('المندوب', v => { cs = v; }));
+    const err = box.querySelector('[data-rv-err]');
+    box.querySelector('[data-rv-send]').addEventListener('click', async ev => {
+      if (!rs) { err.textContent = 'اختار عدد النجوم للمطعم.'; err.style.display = ''; return; }
+      const btn = ev.currentTarget; btn.disabled = true; err.style.display = 'none';
+      const c = box.querySelector('textarea').value.trim();
+      try {
+        await window.SB_API.reviewSubmit(token, rs, r.has_courier && cs ? cs : null, c);
+        thanks(rs, r.has_courier ? cs : 0, c);
+      } catch (e) {
+        if (/already reviewed/.test(e.message || '')) { thanks(rs, cs, c); return; }
+        err.textContent = 'حصلت مشكلة. جرّب تاني.'; err.style.display = ''; btn.disabled = false;
+      }
+    });
+  }
   function mount(el, token, opts) {
     opts = opts || {};
     let timer = null, last = '';
@@ -102,6 +153,10 @@ window.SB_TRACK = (() => {
           const msg = el.querySelector('[data-trk-msg]');
           if (msg) { msg.textContent = 'اللينك اتنسخ.'; msg.style.display = ''; }
         });
+      }
+      if (o.status === 'delivered' && typeof token === 'string') {
+        const box = el.querySelector('[data-review]');
+        if (box && !box.dataset.init) { box.dataset.init = '1'; initReview(box, token); }
       }
       return o.status === 'delivered' || o.status === 'cancelled';
     };
