@@ -5,6 +5,14 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>سوبر بابا · منيو · بني سويف</title>
 <meta name="description" content="سوبر بابا: بيتزا لارج وسندوتشات في بني سويف. اختار طلبك وابعته على واتساب.">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#103d3b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Super Baba">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="apple-touch-icon" href="assets/hero.png">
+<link rel="icon" href="assets/hero.png" type="image/png">
 <link rel="stylesheet" href="assets/shared.css">
 </head>
 <body>
@@ -27,12 +35,16 @@
 
   <div class="callout"><b>إزاي تطلب</b>اختار الأصناف والكميات في قسم «اطلب»، اكتب اسمك وعنوانك، وابعت الطلب على واتساب. رسوم التوصيل والإجمالي النهائي بنأكدهم معاك على واتساب قبل التنفيذ. مفيش دفع أونلاين من الصفحة.</div>
 
+  <div id="live-banner"></div>
+
   <section class="card" style="text-align:center">
     <h3 style="margin-top:0">اطلب أونلاين وتابع طلبك</h3>
     <p class="muted" style="margin:0 0 12px">اختار من المنيو، ابعت الطلب، وشوفه وهو بيتجهز وطلع مع المندوب لحد باب البيت.</p>
     <a class="btn" href="order/">اطلب أونلاين</a>
-    <a class="btn sec" href="track/" style="margin-inline-start:8px">تتبّع طلب</a>
   </section>
+
+  <section class="card" id="live-lookup"></section>
+  <div id="live-out"></div>
 
   <section class="card">
     <h3 style="margin-top:0">مين احنا</h3>
@@ -77,6 +89,12 @@
 </div>
 
 <script src="assets/menu.js"></script>
+<script src="assets/api.js"></script>
+<script src="assets/track.js"></script>
+<script>
+window.SB_TRACK.banner(document.getElementById("live-banner"),"track/");
+window.SB_TRACK.lookup(document.getElementById("live-lookup"),document.getElementById("live-out"));
+</script>
 <script>
 const ORDER_PHONE='201102707994';
 const M=window.SB_MENU, money=window.SB_MONEY;
@@ -138,5 +156,6 @@ function updateSend(sum,sandChosen){
 ['cname','caddr','cnote'].forEach(id=>document.getElementById(id).addEventListener('input',renderOrder));
 renderMenu();renderOrder();
 </script>
+<script src="assets/pwa.js"></script>
 </body>
 </html>
