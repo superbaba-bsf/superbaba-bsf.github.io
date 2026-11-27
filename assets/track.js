@@ -75,7 +75,7 @@ window.SB_TRACK = (() => {
         <p class="muted">بدون رسوم التوصيل. الإجمالي النهائي بيتأكد معاك على واتساب.</p>
         ${o.address ? `<p class="muted">العنوان: ${esc(o.address)}</p>` : ''}
       </div>` : '<p class="muted">لعرض تفاصيل الطلب افتح لينك التتبع، أو اكتب كود الطلب مع رقم التليفون.</p>'}
-      ${!done && !cancelled && opts.share && 'Notification' in window && Notification.permission === 'default' ? '<button type="button" class="btn ghost sm" data-trk-notify>🔔 نبّهني بصوت لما الطلب يوصل</button>' : ''}
+      ${!done && !cancelled && opts.share && 'Notification' in window && Notification.permission === 'default' ? '<button type="button" class="btn ghost sm" data-trk-notify>🔔 نبّهني لما الطلب يوصل</button><p class="muted">هنبعتلك تنبيه حتى لو الموبايل مقفول.</p>' : (!done && !cancelled && opts.share && isIos && !isStandalone ? '<p class="muted">على الآيفون: ضيف التطبيق للشاشة الرئيسية الأول عشان توصلك التنبيهات.</p>' : '')}
       ${done ? '<div class="rv-box" data-review></div>' : ''}
       <div class="trk-share">
         <a class="btn sec sm" href="${wa}" target="_blank" rel="noopener noreferrer">كلمنا على واتساب</a>
@@ -186,9 +186,25 @@ window.SB_TRACK = (() => {
       const b = box.querySelector('.rv-stars button'); if (b) b.focus({ preventScroll: true });
     }, 700);
   }
+
+  // Web Push: lets the phone get the review request even when the app is closed.
+  const VAPID = 'BNZNVDJ-I031D4oyFYUmN388MmWbIzLa1uOg2iuWibC-N7mBXMkycymHCaQPXefqrkZ8qFD_P38KV7Cwt9rL53s';
+  const b64u8 = b => { const p = '='.repeat((4 - b.length % 4) % 4); const r = atob((b + p).replace(/-/g, '+').replace(/_/g, '/')); return Uint8Array.from([...r].map(c => c.charCodeAt(0))); };
+  async function pushSub(token) {
+    try {
+      if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window) || Notification.permission !== 'granted') return;
+      const reg = await navigator.serviceWorker.ready;
+      let sub = await reg.pushManager.getSubscription();
+      if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64u8(VAPID) });
+      const j = sub.toJSON();
+      await window.SB_API.pushSubscribe(token, j.endpoint, j.keys.p256dh, j.keys.auth);
+    } catch (e) {}
+  }
+  const isIos = /iPhone|iPad|iPod/.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
+  const isStandalone = (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
   function mount(el, token, opts) {
     opts = opts || {};
-    let timer = null, last = '', prev = null;
+    let timer = null, last = '', prev = null, subbed = false, scrolled = false;
     const paint = o => {
       if (!o) {
         el.innerHTML = '<div class="callout warn"><b>مفيش طلب بالرقم ده</b>راجع اللينك اللي وصلك من سوبر بابا.</div>';
@@ -215,10 +231,16 @@ window.SB_TRACK = (() => {
           try { await Notification.requestPermission(); } catch (e) {}
           chime();
           nb.style.display = 'none';
+          if (typeof token === 'string') { subbed = true; pushSub(token); }
         });
       }
       if (o.status === 'delivered' && prev && prev !== 'delivered' && prev !== 'cancelled' && typeof token === 'string') alertDelivered(el);
       prev = o.status;
+      if (!subbed && typeof token === 'string' && !finished(o.status)) { subbed = true; pushSub(token); }
+      if (!scrolled && o.status === 'delivered' && /[?&]r=1/.test(location.search)) {
+        scrolled = true;
+        setTimeout(() => { const bx = el.querySelector('[data-review]'); if (bx) { bx.scrollIntoView({ behavior: 'smooth', block: 'center' }); bx.classList.add('rv-pop'); } }, 900);
+      }
       if (o.status === 'delivered' && typeof token === 'string') {
         const box = el.querySelector('[data-review]');
         if (box && !box.dataset.init) { box.dataset.init = '1'; initReview(box, token); }
