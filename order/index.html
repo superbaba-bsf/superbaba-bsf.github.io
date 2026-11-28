@@ -68,8 +68,9 @@
 <script src="../assets/track.js"></script>
 <script>
 const M=window.SB_MENU, money=window.SB_MONEY, api=window.SB_API, errText=window.SB_ERR, STATUS_AR=window.SB_STATUS_AR;
-const byId=Object.fromEntries(M.map(m=>[m.id,m])), extras=M.filter(m=>m.kind==='extra');
-const PHOTO=id=>'../assets/'+({p01:'n-margherita',p02:'n-cheese',p03:'n-ranch',p04:'n-bbq',p05:'n-shawarma',p06:'n-crispy',p07:'n-sogog',p08:'n-supreme',p09:'n-tuna',p10:'n-meat',s01:'n-sbeef',s02:'n-sdbeef',s03:'n-schick',s04:'n-sdchick'}[id])+'.jpg';
+let byId,extras;
+function rebuildM(){byId=Object.fromEntries(M.map(m=>[m.id,m]));extras=M.filter(m=>m.kind==='extra');}
+rebuildM();
 let lines=[], keyN=0, busy=false;
 let token=localStorage.getItem('sb-order-token.v1')||'';
 
@@ -78,7 +79,7 @@ const total=()=>lines.reduce((t,l)=>t+unit(l)*l.qty,0);
 
 function card(m){
   const qty=lines.filter(l=>l.id===m.id).reduce((t,l)=>t+l.qty,0);
-  return `<div class="sbo-card"><img src="${PHOTO(m.id)}" alt="${m.name}" loading="lazy"><div class="sbo-card-b"><b>${m.name}</b><p class="sbo-detail">${m.detail}</p><div class="sbo-card-f"><span class="sbo-price">${money(m.price)}</span><button type="button" class="sbo-add" onclick="add('${m.id}')">${qty>0?`+ زود (${qty})`:'+ أضف'}</button></div></div></div>`;
+  return `<div class="sbo-card">${m.photo?`<img src="${m.photo}" alt="${m.name}" loading="lazy">`:''}<div class="sbo-card-b"><b>${m.name}</b><p class="sbo-detail">${m.detail}</p><div class="sbo-card-f"><span class="sbo-price">${money(m.price)}</span><button type="button" class="sbo-add" onclick="add('${m.id}')">${qty>0?`+ زود (${qty})`:'+ أضف'}</button></div></div></div>`;
 }
 function renderMenu(){
   document.getElementById('grid-pizza').innerHTML=M.filter(m=>m.kind==='pizza').map(card).join('');
@@ -136,6 +137,7 @@ function startTrack(){
 if(token)startTrack();
 else{document.getElementById('lk-card').style.display='';window.SB_TRACK.lookup(document.getElementById('lk-box'),document.getElementById('lk-out'));}
 renderAll();
+window.SB_MENU_LOAD&&window.SB_MENU_LOAD().then(ch=>{if(!ch)return;rebuildM();lines=lines.filter(l=>byId[l.id]).map(l=>({...l,extras:(l.extras||[]).filter(x=>byId[x])}));renderAll();});
 </script>
 <script src="../assets/pwa.js?v=4"></script>
 </body>
