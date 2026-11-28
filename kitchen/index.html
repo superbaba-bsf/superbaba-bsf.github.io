@@ -39,6 +39,26 @@
       <button type="button" class="btn sm" id="push-btn">🔔 فعّل إشعارات الأوردرات على الجهاز ده</button>
       <button type="button" class="btn ghost sm" id="snd-test">جرّب الصوت</button>
     </div>
+    <div class="sbo-actions" style="margin:8px 0"><button type="button" class="btn sec sm" id="menu-open">🍕 تعديل المنيو</button></div>
+    <div id="menu-ed" style="display:none">
+      <h3 style="margin-top:0">تعديل المنيو</h3>
+      <p class="muted" style="margin:4px 0">أي تغيير بيظهر للعملاء في خلال ثواني. «إخفاء» بيشيل الصنف من المنيو ومن الطلب من غير ما يتمسح.</p>
+      <p class="err" id="menu-err" role="alert" style="display:none"></p>
+      <div class="sbo-actions"><button type="button" class="btn sm" id="menu-new">+ صنف جديد</button><button type="button" class="btn ghost sm" id="menu-close">رجوع للطلبات</button></div>
+      <div id="menu-form" class="sbo-line" style="display:none">
+        <b id="mf-title"></b>
+        <div class="sbo-form">
+          <label>الاسم<input id="mf-name" maxlength="60"></label>
+          <label>السعر (جنيه)<input id="mf-price" type="number" inputmode="numeric" min="1" max="5000" step="1" dir="ltr"></label>
+          <label>القسم<select id="mf-kind"><option value="pizza">بيتزا</option><option value="sandwich">سندوتشات</option><option value="extra">إضافات (على البيتزا)</option></select></label>
+          <label>الوصف<textarea id="mf-detail" rows="3" maxlength="300"></textarea></label>
+          <label>الصورة<input id="mf-photo" type="file" accept="image/*"></label>
+          <img id="mf-prev" alt="" style="display:none;max-width:160px;border-radius:12px">
+          <div class="sbo-actions"><button type="button" class="btn" id="mf-save">حفظ</button><button type="button" class="btn ghost" id="mf-cancel">إلغاء</button></div>
+        </div>
+      </div>
+      <div id="menu-list"></div>
+    </div>
     <div id="orders"></div>
     <div id="rv-staff"></div>
     <button type="button" class="btn sec sm" id="logout">خروج</button>
@@ -65,7 +85,7 @@ loginBtn.addEventListener('click',async()=>{
   loginBtn.textContent='دخول';lv();
 });
 document.getElementById('logout').addEventListener('click',()=>{
-  jwt='';seen=null;stopAlarm();if(timer)clearInterval(timer);
+  jwt='';seen=null;stopAlarm();$('menu-ed').style.display='none';$('menu-open').style.display='';['orders','rv-staff','push-box'].forEach(i=>$(i).style.display='');if(timer)clearInterval(timer);
   document.getElementById('board').style.display='none';
   document.getElementById('login-card').style.display='';
 });
@@ -162,6 +182,72 @@ async function pushRegister(ask){
 }
 document.getElementById('push-btn').addEventListener('click',()=>{unlockAudio();pushRegister(true);});
 if('serviceWorker' in navigator)navigator.serviceWorker.register('/sw.js').catch(()=>{});
+
+
+/* ---- menu editor (staff only; the database enforces it) ---- */
+const KIND_AR={pizza:'البيتزا',sandwich:'السندوتشات',extra:'الإضافات'};
+let mrows=[], medit=null, mfile=null;
+const $=id=>document.getElementById(id);
+function menuErr(m){const e=$('menu-err');e.textContent=m||'';e.style.display=m?'':'none';}
+function setMenuOpen(on){
+  $('menu-ed').style.display=on?'':'none';$('menu-open').style.display=on?'none':'';
+  ['orders','rv-staff','push-box'].forEach(i=>$(i).style.display=on?'none':'');
+  if(on)menuLoad();
+}
+async function menuLoad(){
+  try{const rows=await api.menuStaffList(jwt);mrows=window.SB_MENU_BUILD(rows,true);renderMenuList();menuErr('');}
+  catch(e){menuErr('ما قدرتش أحمّل المنيو. جرّب تاني.');}
+}
+function renderMenuList(){
+  $('menu-list').innerHTML=['pizza','sandwich','extra'].map(k=>{
+    const its=mrows.filter(m=>m.kind===k);
+    return `<h4>${KIND_AR[k]}</h4>`+(its.length?its.map(m=>`<div class="sbo-line" style="${m.active?'':'opacity:.55'}"><div class="sbo-line-h"><span style="display:flex;gap:10px;align-items:center">${m.photo?`<img src="${escK(m.photo)}" alt="" style="width:52px;height:52px;object-fit:cover;border-radius:10px">`:''}<b>${escK(m.name)}</b></span><span>${m.price} ج.م${m.active?'':' · مخفي'}</span></div>
+      <div class="sbo-actions"><button type="button" class="btn sm sec" onclick="menuEdit('${m.id}')">تعديل</button><button type="button" class="btn ghost sm" onclick="menuToggle('${m.id}',${!m.active})">${m.active?'إخفاء':'إظهار'}</button></div></div>`).join(''):'<p class="muted">فاضي</p>');
+  }).join('');
+}
+function menuEdit(id){
+  const m=id?mrows.find(x=>x.id===id):null;
+  medit=m?m.id:'';mfile=null;
+  $('mf-title').textContent=m?'تعديل: '+m.name:'صنف جديد';
+  $('mf-name').value=m?m.name:'';$('mf-price').value=m?m.price:'';$('mf-kind').value=m?m.kind:'pizza';$('mf-detail').value=m?m.detail:'';
+  $('mf-photo').value='';const pv=$('mf-prev');pv.src=m&&m.photo?m.photo:'';pv.style.display=m&&m.photo?'':'none';
+  $('menu-form').style.display='';$('menu-form').scrollIntoView({behavior:'smooth',block:'start'});
+}
+async function menuToggle(id,active){
+  try{await api.menuUpdate(jwt,id,{active});await menuLoad();}catch(e){menuErr(errText(e));}
+}
+function shrink(file){
+  return new Promise((res,rej)=>{
+    const img=new Image(),u=URL.createObjectURL(file);
+    img.onload=()=>{const M=900,r=Math.min(1,M/Math.max(img.width,img.height));const c=document.createElement('canvas');c.width=Math.round(img.width*r);c.height=Math.round(img.height*r);
+      c.getContext('2d').drawImage(img,0,0,c.width,c.height);URL.revokeObjectURL(u);c.toBlob(b=>b?res(b):rej(new Error('img')),'image/jpeg',0.82);};
+    img.onerror=()=>{URL.revokeObjectURL(u);rej(new Error('img'));};img.src=u;
+  });
+}
+$('mf-photo').addEventListener('change',async e=>{
+  const f=e.target.files[0];if(!f)return;
+  try{mfile=await shrink(f);const pv=$('mf-prev');pv.src=URL.createObjectURL(mfile);pv.style.display='';menuErr('');}
+  catch(x){mfile=null;menuErr('الصورة دي مش مقروءة. جرّب صورة تانية.');}
+});
+$('mf-cancel').addEventListener('click',()=>{$('menu-form').style.display='none';});
+$('menu-new').addEventListener('click',()=>menuEdit(''));
+$('menu-open').addEventListener('click',()=>setMenuOpen(true));
+$('menu-close').addEventListener('click',()=>{$('menu-form').style.display='none';setMenuOpen(false);reload();});
+$('mf-save').addEventListener('click',async()=>{
+  const name=$('mf-name').value.trim(),price=parseInt($('mf-price').value,10),kind=$('mf-kind').value,detail=$('mf-detail').value.trim();
+  if(name.length<2){menuErr('اكتب اسم الصنف.');return;}
+  if(!(price>=1&&price<=5000)){menuErr('السعر لازم يكون رقم من 1 لـ 5000.');return;}
+  const b=$('mf-save');b.disabled=true;b.textContent='...';
+  try{
+    const id=medit||('n'+Date.now().toString(36));
+    const row={name,price_egp:price,kind,detail};
+    if(mfile)row.photo=await api.menuUpload(jwt,id+'-'+Date.now()+'.jpg',mfile);
+    if(medit)await api.menuUpdate(jwt,medit,row);
+    else{row.id=id;row.sort=mrows.reduce((a,m)=>Math.max(a,m.sort),0)+1;row.active=true;await api.menuCreate(jwt,row);}
+    $('menu-form').style.display='none';menuErr('');await menuLoad();
+  }catch(e){menuErr('ما اتحفظش. جرّب تاني.');}
+  b.disabled=false;b.textContent='حفظ';
+});
 
 async function reload(){
   const err=document.getElementById('board-err');
