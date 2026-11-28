@@ -108,8 +108,9 @@ window.SB_TRACK.lookup(document.getElementById("live-lookup"),document.getElemen
 <script>
 const ORDER_PHONE='201102707994';
 const M=window.SB_MENU, money=window.SB_MONEY;
-const pizza=M.filter(i=>i.kind==='pizza'), extras=M.filter(i=>i.kind==='extra'), sandwiches=M.filter(i=>i.kind==='sandwich');
-const pizzaMap=Object.fromEntries(pizza.map(i=>[i.num,i]));
+let pizza,extras,sandwiches,pizzaMap;
+function rebuildM(){pizza=M.filter(i=>i.kind==='pizza');extras=M.filter(i=>i.kind==='extra');sandwiches=M.filter(i=>i.kind==='sandwich');pizzaMap=Object.fromEntries(pizza.map(i=>[i.num,i]));}
+rebuildM();
 let units=[], sq={}, uidn=1, active='all';
 
 /* ---- menu browsing ---- */
@@ -165,6 +166,7 @@ function updateSend(sum,sandChosen){
 }
 ['cname','caddr','cnote'].forEach(id=>document.getElementById(id).addEventListener('input',renderOrder));
 renderMenu();renderOrder();
+window.SB_MENU_LOAD&&window.SB_MENU_LOAD().then(ch=>{if(!ch)return;const n=extras.length;rebuildM();units=units.filter(u=>pizzaMap[u.key]);Object.keys(sq).forEach(k=>{if(!sandwiches.some(i=>i.num===k))delete sq[k];});if(extras.length!==n)units.forEach(u=>{u.x=extras.map(()=>false);});renderMenu();renderOrder();});
 </script>
 <script src="assets/reviews.js" defer></script>
 <script src="assets/pwa.js?v=4"></script>
