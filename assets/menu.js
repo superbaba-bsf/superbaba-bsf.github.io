@@ -14,8 +14,8 @@ window.SB_MENU = [
   {id:'x02',kind:'extra',num:'+',name:'إضافة لحم',price:30,detail:'إضافة على البيتزا اللارج'},
   {id:'x03',kind:'extra',num:'+',name:'إضافة فراخ',price:30,detail:'إضافة على البيتزا اللارج'},
   {id:'x04',kind:'extra',num:'+',name:'إضافة جبن',price:30,detail:'إضافة على البيتزا اللارج'},
-  {id:'s01',kind:'sandwich',num:'01',name:'سندوتش لحم على الفحم',price:80,detail:'بيف مشوي على الفحم مع جبنة وخضار',photo:'assets/n-sbeef.jpg'},
-  {id:'s02',kind:'sandwich',num:'02',name:'دبل سندوتش لحم على الفحم',price:115,detail:'قطعتين بيف مشوي على الفحم',photo:'assets/n-sdbeef.jpg'},
+  {id:'s01',kind:'sandwich',num:'01',name:'برجر على الفحم',price:80,detail:'بيف مشوي على الفحم مع جبنة وخضار',photo:'assets/n-sbeef.jpg'},
+  {id:'s02',kind:'sandwich',num:'02',name:'دبل برجر على الفحم',price:115,detail:'قطعتين بيف مشوي على الفحم',photo:'assets/n-sdbeef.jpg'},
   {id:'s03',kind:'sandwich',num:'03',name:'سندوتش كريسبي تشيكن',price:75,detail:'فراخ كريسبي مقرمشة',photo:'assets/n-schick.jpg'},
   {id:'s04',kind:'sandwich',num:'04',name:'دبل كريسبي تشيكن',price:105,detail:'قطعتين فراخ كريسبي',photo:'assets/n-sdchick.jpg'}
 ];
