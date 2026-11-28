@@ -52,6 +52,15 @@ window.SB_API = (() => {
     assign(token, order, courier) {
       return call('/rest/v1/rpc/staff_assign', 'POST', { p_order: order, p_courier: courier }, token);
     },
+    menuStaffList(token) { return call('/rest/v1/menu_items?select=*&order=sort.asc', 'GET', undefined, token); },
+    menuCreate(token, row) { return call('/rest/v1/menu_items', 'POST', row, token); },
+    menuUpdate(token, id, patch) { return call('/rest/v1/menu_items?id=eq.' + encodeURIComponent(id), 'PATCH', patch, token); },
+    async menuUpload(token, path, blob) {
+      const res = await fetch(BASE + '/storage/v1/object/menu/' + path, {
+        method: 'POST', headers: { apikey: KEY, Authorization: 'Bearer ' + token, 'Content-Type': blob.type || 'image/jpeg' }, body: blob });
+      if (!res.ok) throw new Error('HTTP_' + res.status + ':' + (await res.text()).slice(0, 200));
+      return BASE + '/storage/v1/object/public/menu/' + path;
+    },
     reviewGet(token) { return call('/rest/v1/rpc/review_get', 'POST', { p_token: token }); },
     reviewSubmit(token, restaurant, courier, comment) {
       return call('/rest/v1/rpc/review_submit', 'POST', { p_token: token, p_restaurant: restaurant, p_courier: courier, p_comment: comment || null });
