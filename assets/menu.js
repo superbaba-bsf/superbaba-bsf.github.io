@@ -19,5 +19,36 @@ window.SB_MENU = [
   {id:'s03',kind:'sandwich',num:'03',name:'سندوتش كريسبي تشيكن',price:75,detail:'فراخ كريسبي مقرمشة',photo:'assets/n-schick.jpg'},
   {id:'s04',kind:'sandwich',num:'04',name:'دبل كريسبي تشيكن',price:105,detail:'قطعتين فراخ كريسبي',photo:'assets/n-sdchick.jpg'}
 ];
+/* ---- live menu: the database is the source of truth (staff edit it from the kitchen page).
+   The list above is only the first paint / offline fallback. ---- */
+(function(){
+  var ROOT=new URL('../',document.currentScript.src).href;
+  var BASE='https://oyrebngeqxfkiczsltru.supabase.co', KEY='sb_publishable_BRk0ALVVuSwxKj1PpCB37g_uZycYy69';
+  var stat={}; window.SB_MENU.forEach(function(m){stat[m.id]=m;});
+  function abs(p){return !p?'':/^https?:/.test(p)?p:new URL(p,ROOT).href;}
+  window.SB_MENU.forEach(function(m){m.photo=abs(m.photo);});
+  function build(rows,all){
+    var cnt={};
+    return rows.filter(function(r){return all||r.active;}).sort(function(a,b){return a.sort-b.sort;}).map(function(r){
+      var s=stat[r.id]||{}; cnt[r.kind]=(cnt[r.kind]||0)+1;
+      return {id:r.id,kind:r.kind,num:r.kind==='extra'?'+':String(cnt[r.kind]).padStart(2,'0'),name:r.name,price:r.price_egp,
+        detail:r.detail!=null?r.detail:(s.detail||''),photo:r.photo?abs(r.photo):(s.photo||''),sort:r.sort,active:r.active};
+    });
+  }
+  function apply(rows){var out=build(rows,false); if(out.length)window.SB_MENU.splice.apply(window.SB_MENU,[0,window.SB_MENU.length].concat(out));}
+  window.SB_MENU_BUILD=build;
+  var CK='sb-menu.v1', cached=null;
+  try{cached=localStorage.getItem(CK);if(cached)apply(JSON.parse(cached));}catch(e){cached=null;}
+  window.SB_MENU_LOAD=function(){
+    return fetch(BASE+'/rest/v1/menu_items?select=id,kind,sort,name,price_egp,active,detail,photo&active=eq.true&order=sort.asc',{headers:{apikey:KEY,Authorization:'Bearer '+KEY}})
+      .then(function(r){if(!r.ok)throw 0;return r.json();})
+      .then(function(rows){
+        if(!Array.isArray(rows)||!rows.length)return false;
+        var j=JSON.stringify(rows); apply(rows);
+        try{localStorage.setItem(CK,j);}catch(e){}
+        return true;
+      }).catch(function(){return false;});
+  };
+})();
 window.SB_STATUS_AR = {new:'استلمنا طلبك',preparing:'بيتجهز',ready:'جاهز للتوصيل',assigned:'اتسلّم لمندوب',picked_up:'في الطريق',delivered:'اتسلّم',cancelled:'اتلغى'};
 window.SB_MONEY = n => n + ' ج.م';
