@@ -70,6 +70,8 @@
 const M=window.SB_MENU, money=window.SB_MONEY, api=window.SB_API, errText=window.SB_ERR, STATUS_AR=window.SB_STATUS_AR;
 let byId,extras;
 function rebuildM(){byId=Object.fromEntries(M.map(m=>[m.id,m]));extras=M.filter(m=>m.kind==='extra');}
+const SAUCE=['x05','x06','x07','x08','x09'];
+function extrasFor(l){return byId[l.id].kind==='pizza'?extras:extras.filter(x=>SAUCE.includes(x.id));}
 rebuildM();
 let lines=[], keyN=0, busy=false;
 let token=localStorage.getItem('sb-order-token.v1')||'';
@@ -95,7 +97,7 @@ function renderCart(){
   if(!lines.length){el.innerHTML='<p class="muted">لسه مفيش أصناف. اضغط على صنف فوق.</p>';}
   else el.innerHTML=lines.map(l=>`<div class="sbo-line"><div class="sbo-line-h"><b>${byId[l.id].name}</b><span>${money(unit(l)*l.qty)}</span></div>
     <div class="sbo-step"><button type="button" aria-label="قلل" onclick="${l.qty>1?`patch(${l.key},x=>({...x,qty:x.qty-1}))`:`removeLine(${l.key})`}">−</button><b>${l.qty}</b><button type="button" aria-label="زود" onclick="patch(${l.key},x=>({...x,qty:Math.min(20,x.qty+1)}))">+</button></div>
-    ${byId[l.id].kind==='pizza'?`<div class="sbo-chips">${extras.map(x=>`<label class="sbo-chip${(l.extras||[]).includes(x.id)?' on':''}"><input type="checkbox" ${(l.extras||[]).includes(x.id)?'checked':''} onchange="toggleX(${l.key},'${x.id}')">${x.name} +${x.price}</label>`).join('')}</div>`:''}</div>`).join('');
+    ${byId[l.id].kind!=='extra'?`<div class="sbo-chips">${extrasFor(l).map(x=>`<label class="sbo-chip${(l.extras||[]).includes(x.id)?' on':''}"><input type="checkbox" ${(l.extras||[]).includes(x.id)?'checked':''} onchange="toggleX(${l.key},'${x.id}')">${x.name} +${x.price}</label>`).join('')}</div>`:''}</div>`).join('');
   const tp=document.getElementById('cart-total');
   tp.style.display=lines.length?'':'none';
   tp.querySelector('b').textContent='إجمالي الأصناف: '+money(total());
